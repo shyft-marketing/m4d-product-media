@@ -88,20 +88,23 @@ class M4D_Product_Media {
     }
 
     public function save_variation_gallery( $variation_id, $i ) {
-        if ( ! isset( $_POST['m4d_variation_gallery'][ $variation_id ] ) ) {
-            delete_post_meta( $variation_id, '_m4d_variation_gallery' );
-            return;
-        }
-
-        $ids = array_filter(
-            array_map(
-                'absint',
-                explode( ',', wp_unslash( $_POST['m4d_variation_gallery'][ $variation_id ] ) )
-            )
-        );
-
-        update_post_meta( $variation_id, '_m4d_variation_gallery', $ids );
+    if ( ! isset( $_POST['m4d_variation_gallery'][ $variation_id ] ) ) {
+        return;
     }
+
+    $raw = trim( wp_unslash( $_POST['m4d_variation_gallery'][ $variation_id ] ) );
+
+    if ( $raw === '' ) {
+        delete_post_meta( $variation_id, '_m4d_variation_gallery' );
+        return;
+    }
+
+    $ids = array_filter(
+        array_map( 'absint', explode( ',', $raw ) )
+    );
+
+    update_post_meta( $variation_id, '_m4d_variation_gallery', $ids );
+}
 
     /* -------------------------
      * FRONTEND
