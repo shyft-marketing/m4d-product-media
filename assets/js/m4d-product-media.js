@@ -88,7 +88,6 @@ jQuery(function ($) {
     let isUpdating = false;
 
     function rotateGalleryToIndex(startIndex, options = {}) {
-    function rotateGalleryToIndex(startIndex) {
         if (isUpdating || startIndex <= 0) return;
         if (startIndex >= mainSwiper.slides.length) return;
 
@@ -103,29 +102,23 @@ jQuery(function ($) {
         }
 
         const reorderSlides = () => {
-        const transitionSpeed = 300;
+            const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
+            const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
+            const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
+            const reorderedThumbs = thumbSlides.slice(startIndex).concat(thumbSlides.slice(0, startIndex));
 
-        mainSwiper.slideTo(startIndex, transitionSpeed);
-        thumbSwiper.slideTo(startIndex, transitionSpeed);
+            mainSwiper.removeAllSlides();
+            thumbSwiper.removeAllSlides();
 
-        window.setTimeout(() => {
-        const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
-        const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
-        const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
-        const reorderedThumbs = thumbSlides.slice(startIndex).concat(thumbSlides.slice(0, startIndex));
+            mainSwiper.appendSlide(reorderedMain);
+            thumbSwiper.appendSlide(reorderedThumbs);
 
-        mainSwiper.removeAllSlides();
-        thumbSwiper.removeAllSlides();
+            mainSwiper.update();
+            thumbSwiper.update();
+            mainSwiper.slideTo(0, 0);
+            thumbSwiper.slideTo(0, 0);
 
-        mainSwiper.appendSlide(reorderedMain);
-        thumbSwiper.appendSlide(reorderedThumbs);
-
-        mainSwiper.update();
-        thumbSwiper.update();
-        mainSwiper.slideTo(0, 0);
-        thumbSwiper.slideTo(0, 0);
-
-        isUpdating = false;
+            isUpdating = false;
         };
 
         if (transitionSpeed > 0) {
@@ -133,7 +126,6 @@ jQuery(function ($) {
         } else {
             reorderSlides();
         }
-        }, transitionSpeed);
     }
 
     $thumbSwiperEl.on('click', '.swiper-slide', function () {
@@ -144,7 +136,6 @@ jQuery(function ($) {
 
     mainSwiper.on('slideChangeTransitionEnd', () => {
         rotateGalleryToIndex(mainSwiper.activeIndex, { animate: false });
-        rotateGalleryToIndex(clickedIndex);
     });
 
     function resetToProductImages() {
