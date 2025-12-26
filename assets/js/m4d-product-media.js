@@ -73,6 +73,12 @@ jQuery(function ($) {
 
         isUpdating = true;
 
+        const transitionSpeed = 300;
+
+        mainSwiper.slideTo(startIndex, transitionSpeed);
+        thumbSwiper.slideTo(startIndex, transitionSpeed);
+
+        window.setTimeout(() => {
         const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
         const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
         const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
@@ -90,11 +96,13 @@ jQuery(function ($) {
         thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
+        }, transitionSpeed);
     }
 
-    thumbSwiper.on('click', () => {
-        if (typeof thumbSwiper.clickedIndex !== 'number') return;
-        rotateGalleryToIndex(thumbSwiper.clickedIndex);
+    $thumbSwiperEl.on('click', '.swiper-slide', function () {
+        const clickedIndex = $(this).index();
+        if (typeof clickedIndex !== 'number') return;
+        rotateGalleryToIndex(clickedIndex);
     });
 
     function resetToProductImages() {
