@@ -49,11 +49,13 @@
 .m4d-thumb-swiper .swiper-pagination {
   position: relative;
   margin-top: 1rem;
-  font-size: 0.5rem;
+  font-size: 0.75rem;
+  top: 0;
+  bottom: 0;
 }
 
 .m4d-thumb-swiper .swiper-slide {
-  margin-right: 1rem;
+  margin-right: 1rem !important;
 }
 
 .m4d-thumb-swiper .swiper-pagination-bullet {
@@ -78,4 +80,20 @@
 
 .m4d-thumb-swiper .swiper-button-next:hover, .m4d-thumb-swiper .swiper-button-prev:hover {
   background-color: #bb2d21;
+  opacity: 1;
+}
+
+@media only screen and (max-width: 1024px) {
+  .m4d-thumb-swiper img {
+    width: 4rem;
+    height: 4rem;
+    object-fit: contain;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .m4d-thumb-swiper img {
+    width: 3rem;
+    height: 3rem;
+  }
 }
