@@ -13,23 +13,26 @@ jQuery(function ($) {
 
     const $thumbSwiperEl = $('.m4d-thumb-swiper');
 
+    const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const thumbSpacing = remSize;
+
     const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
         slidesPerView: 6,
-        spaceBetween: 16,
+        spaceBetween: thumbSpacing,
         watchSlidesProgress: true,
         slideToClickedSlide: true,
         breakpoints: {
             0: {
                 slidesPerView: 3,
-                spaceBetween: 8
+                spaceBetween: thumbSpacing
             },
             769: {
                 slidesPerView: 4,
-                spaceBetween: 16
+                spaceBetween: thumbSpacing
             },
             1025: {
                 slidesPerView: 6,
-                spaceBetween: 16
+                spaceBetween: thumbSpacing
             }
         },
         pagination: {
