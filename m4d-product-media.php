@@ -2,7 +2,7 @@
 /**
  * Plugin Name: M4D Product Media
  * Description: Custom product image + variation media handler.
- * Version: 0.2.8
+ * Version: 0.2.12
  * Author: SHYFT
  * Author URI: https://shyft.wtf/
  * Plugin URI: https://github.com/shyft-marketing/m4d-product-media
@@ -52,11 +52,18 @@ class M4D_Product_Media {
 
 		wp_enqueue_media();
 
+		wp_enqueue_style(
+			'm4d-product-media-admin',
+			plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media-admin.css',
+			[],
+			'0.2.12'
+		);
+
 		wp_enqueue_script(
 			'm4d-product-media-admin',
 			plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media-admin.js',
 			[ 'jquery', 'jquery-ui-sortable' ],
-			'0.2.7',
+			'0.2.12',
 			true
 		);
 	}
@@ -71,23 +78,26 @@ class M4D_Product_Media {
 		<div class="form-row form-row-full m4d-variation-gallery-wrapper">
 			<label><strong>Variation Image Gallery</strong></label>
 
-			<ul class="m4d-variation-gallery"
+			<div class="m4d-variation-gallery-container">
+				<ul class="product_images m4d-variation-gallery"
 				data-variation-id="<?php echo esc_attr( $variation_id ); ?>"
 				data-loop-index="<?php echo esc_attr( $loop ); ?>"
-				style="display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; padding:0;"
 			>
-				<?php foreach ( $image_ids as $image_id ) :
-					$thumb = wp_get_attachment_image_url( $image_id, 'thumbnail' );
-					if ( ! $thumb ) { continue; }
-					?>
-					<li data-attachment-id="<?php echo esc_attr( $image_id ); ?>" style="position:relative; list-style:none;">
-						<img src="<?php echo esc_url( $thumb ); ?>" style="width:60px; height:60px; object-fit:cover; display:block;" />
-						<button type="button" class="button-link m4d-remove-image"
-							style="position:absolute; top:-8px; right:-8px; width:22px; height:22px; border-radius:999px; background:#fff; border:1px solid #ccc; line-height:20px; text-align:center; padding:0;"
-						>×</button>
-					</li>
-				<?php endforeach; ?>
-			</ul>
+					<?php foreach ( $image_ids as $image_id ) :
+						$thumb = wp_get_attachment_image_url( $image_id, 'thumbnail' );
+						if ( ! $thumb ) { continue; }
+						?>
+						<li class="image" data-attachment_id="<?php echo esc_attr( $image_id ); ?>">
+							<img src="<?php echo esc_url( $thumb ); ?>" />
+							<ul class="actions">
+								<li>
+									<a href="#" class="delete m4d-remove-image" title="Remove image">×</a>
+								</li>
+							</ul>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
 
 			<?php
 			/**
@@ -110,7 +120,9 @@ class M4D_Product_Media {
 				value="<?php echo esc_attr( implode( ',', $image_ids ) ); ?>"
 			/>
 
-			<button type="button" class="button m4d-add-variation-images">Add Gallery Images</button>
+			<p class="add_product_images hide-if-no-js">
+				<a href="#" class="button m4d-add-variation-images">Add product gallery images</a>
+			</p>
 			<p class="description" style="margin-top:6px;">
 				Tip: Drag to reorder. These are additional images only — the main variation image stays separate.
 			</p>
@@ -172,14 +184,14 @@ class M4D_Product_Media {
 			'm4d-product-media',
 			plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media.css',
 			[],
-			'0.2.7'
+			'0.2.12'
 		);
 
 		wp_enqueue_script(
 			'm4d-product-media',
 			plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media.js',
 			[ 'jquery', 'swiper' ],
-			'0.2.7',
+			'0.2.12',
 			true
 		);
 
