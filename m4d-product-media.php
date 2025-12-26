@@ -52,11 +52,18 @@ class M4D_Product_Media {
 
 		wp_enqueue_media();
 
+		wp_enqueue_style(
+			'm4d-product-media-admin',
+			plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media-admin.css',
+			[],
+			'0.2.11'
+		);
+
 		wp_enqueue_script(
 			'm4d-product-media-admin',
 			plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media-admin.js',
 			[ 'jquery', 'jquery-ui-sortable' ],
-			'0.2.9',
+			'0.2.11',
 			true
 		);
 	}
@@ -80,7 +87,7 @@ class M4D_Product_Media {
 						$thumb = wp_get_attachment_image_url( $image_id, 'thumbnail' );
 						if ( ! $thumb ) { continue; }
 						?>
-						<li class="image" data-attachment-id="<?php echo esc_attr( $image_id ); ?>">
+						<li class="image" data-attachment_id="<?php echo esc_attr( $image_id ); ?>">
 							<img src="<?php echo esc_url( $thumb ); ?>" />
 							<ul class="actions">
 								<li>
@@ -177,14 +184,14 @@ class M4D_Product_Media {
 			'm4d-product-media',
 			plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media.css',
 			[],
-			'0.2.9'
+			'0.2.11'
 		);
 
 		wp_enqueue_script(
 			'm4d-product-media',
 			plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media.js',
 			[ 'jquery', 'swiper' ],
-			'0.2.9',
+			'0.2.11',
 			true
 		);
 
