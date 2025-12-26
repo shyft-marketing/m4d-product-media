@@ -50,6 +50,44 @@ jQuery(function ($) {
 
     let isUpdating = false;
 
+    function rotateGalleryToIndex(startIndex) {
+        if (isUpdating || startIndex <= 0) return;
+        if (startIndex >= mainSwiper.slides.length) return;
+
+        isUpdating = true;
+
+        const transitionSpeed = 300;
+
+        mainSwiper.slideTo(startIndex, transitionSpeed);
+        thumbSwiper.slideTo(startIndex, transitionSpeed);
+
+        window.setTimeout(() => {
+        const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
+        const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
+        const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
+        const reorderedThumbs = thumbSlides.slice(startIndex).concat(thumbSlides.slice(0, startIndex));
+
+        mainSwiper.removeAllSlides();
+        thumbSwiper.removeAllSlides();
+
+        mainSwiper.appendSlide(reorderedMain);
+        thumbSwiper.appendSlide(reorderedThumbs);
+
+        mainSwiper.update();
+        thumbSwiper.update();
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
+
+        isUpdating = false;
+        }, transitionSpeed);
+    }
+
+    $thumbSwiperEl.on('click', '.swiper-slide', function () {
+        const clickedIndex = $(this).index();
+        if (typeof clickedIndex !== 'number') return;
+        rotateGalleryToIndex(clickedIndex);
+    });
+
     function resetToProductImages() {
         if (isUpdating) return;
         isUpdating = true;
