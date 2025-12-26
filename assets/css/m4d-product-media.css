@@ -103,14 +103,24 @@
 }
 
 @media only screen and (max-width: 1024px) {
+  .m4d-thumb-swiper .swiper-slide {
+    width: calc((100% - 3rem) / 4) !important;
+  }
+
   .m4d-thumb-swiper img {
-    width: 6rem;
+    width: 100%;
+    height: auto;
   }
 }
 
 @media only screen and (max-width: 768px) {
+  .m4d-thumb-swiper .swiper-slide {
+    width: calc((100% - 1rem) / 3) !important;
+  }
+
   .m4d-thumb-swiper img {
-    width: 5rem;
+    width: 100%;
+    height: auto;
   }
   
   .m4d-thumb-swiper .swiper-slide {
