@@ -13,8 +13,11 @@ jQuery(function ($) {
 
     const $thumbSwiperEl = $('.m4d-thumb-swiper');
 
-    const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    const thumbSpacing = remSize;
+    const getThumbSpacing = () => {
+        const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        return Number.isFinite(remSize) ? remSize : 16;
+    };
+    let thumbSpacing = getThumbSpacing();
 
     const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
         slidesPerView: 6,
@@ -64,6 +67,23 @@ jQuery(function ($) {
             swiper: thumbSwiper
         }
     });
+
+    function updateThumbSpacing() {
+        const nextSpacing = getThumbSpacing();
+        if (nextSpacing === thumbSpacing) return;
+        thumbSpacing = nextSpacing;
+        thumbSwiper.params.spaceBetween = thumbSpacing;
+        if (thumbSwiper.params.breakpoints) {
+            Object.values(thumbSwiper.params.breakpoints).forEach((breakpoint) => {
+                if (breakpoint) {
+                    breakpoint.spaceBetween = thumbSpacing;
+                }
+            });
+        }
+        thumbSwiper.update();
+    }
+
+    $(window).on('resize orientationchange', updateThumbSpacing);
 
     let isUpdating = false;
 
