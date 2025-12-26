@@ -10,77 +10,115 @@
  * Primary Branch: main
  */
 
-defined( 'ABSPATH' ) || exit;
+if (!defined('ABSPATH')) exit;
 
+class M4D_Product_Media {
+    const HANDLE = 'm4d-product-media';
 
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
-
-add_action( 'wp_footer', function () {
-    if ( ! is_product() ) {
-        return;
+    public function __construct() {
+        add_action('wp_enqueue_scripts', [$this, 'register_assets']);
+        add_shortcode('m4d_product_media', [$this, 'shortcode']);
     }
 
-    global $product;
+    public function register_assets() {
+        wp_register_style(
+            self::HANDLE,
+            plugins_url('assets/css/m4d-product-media.css', __FILE__),
+            [],
+            '0.1.0'
+        );
 
-    if ( ! $product instanceof WC_Product ) {
-        return;
+        wp_register_script(
+            self::HANDLE,
+            plugins_url('assets/js/m4d-product-media.js', __FILE__),
+            ['jquery'],
+            '0.1.0',
+            true
+        );
+
+        wp_register_style(
+            'm4d-swiper',
+            'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css',
+            [],
+            '11.0.0'
+        );
+
+        wp_register_script(
+            'm4d-swiper',
+            'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js',
+            [],
+            '11.0.0',
+            true
+        );
     }
 
-    // Base product images
-    $product_images = [];
+    public function shortcode($atts = []) {
+        if (!function_exists('is_product') || !is_product()) {
+            return '';
+        }
 
-    foreach ( $product->get_gallery_image_ids() as $image_id ) {
-        $product_images[] = [
-            'id'  => $image_id,
-            'src' => wp_get_attachment_image_url( $image_id, 'full' ),
-            'alt' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ),
-        ];
-    }
+        global $product;
+        if (!$product || !is_a($product, 'WC_Product')) {
+            return '';
+        }
 
-    // Include featured image first
-    if ( $product->get_image_id() ) {
-        array_unshift( $product_images, [
-            'id'  => $product->get_image_id(),
-            'src' => wp_get_attachment_image_url( $product->get_image_id(), 'full' ),
-            'alt' => get_post_meta( $product->get_image_id(), '_wp_attachment_image_alt', true ),
-        ]);
-    }
+        $image_ids = [];
 
-    // Variations
-    $variations_data = [];
+        $featured_id = $product->get_image_id();
+        if ($featured_id) {
+            $image_ids[] = $featured_id;
+        }
 
-    if ( $product->is_type( 'variable' ) ) {
-        foreach ( $product->get_available_variations() as $variation ) {
-            $vid = $variation['variation_id'];
+        $gallery_ids = $product->get_gallery_image_ids();
+        if (!empty($gallery_ids)) {
+            $image_ids = array_merge($image_ids, $gallery_ids);
+        }
 
-            $images = [];
+        $images = [];
+        foreach ($image_ids as $id) {
+            $full  = wp_get_attachment_image_src($id, 'full');
+            $large = wp_get_attachment_image_src($id, 'large');
+            $thumb = wp_get_attachment_image_src($id, 'woocommerce_thumbnail');
 
-            if ( ! empty( $variation['image']['id'] ) ) {
-                $image_id = $variation['image']['id'];
+            if (!$full || empty($full[0])) continue;
 
-                $images[] = [
-                    'id'  => $image_id,
-                    'src' => wp_get_attachment_image_url( $image_id, 'full' ),
-                    'alt' => get_post_meta( $image_id, '_wp_attachment_image_alt', true ),
-                ];
-            }
+            $alt = trim(get_post_meta($id, '_wp_attachment_image_alt', true));
 
-            $variations_data[ $vid ] = [
-                'attributes' => $variation['attributes'],
-                'images'     => $images,
+            $images[] = [
+                'id'    => (int) $id,
+                'full'  => $full[0],
+                'large' => ($large && !empty($large[0])) ? $large[0] : $full[0],
+                'thumb' => ($thumb && !empty($thumb[0])) ? $thumb[0] : $full[0],
+                'alt'   => $alt,
             ];
         }
+
+        wp_enqueue_style('m4d-swiper');
+        wp_enqueue_script('m4d-swiper');
+        wp_enqueue_style(self::HANDLE);
+        wp_enqueue_script(self::HANDLE);
+
+        wp_localize_script(self::HANDLE, 'M4DPM', [
+            'baseImages' => $images,
+        ]);
+
+        ob_start(); ?>
+        <div class="m4d-pm" data-m4d-pm="1">
+            <div class="m4d-pm-main swiper">
+                <div class="swiper-wrapper"></div>
+
+                <div class="m4d-pm-nav m4d-pm-prev" aria-label="Previous slide"></div>
+                <div class="m4d-pm-nav m4d-pm-next" aria-label="Next slide"></div>
+            </div>
+
+            <div class="m4d-pm-thumbs swiper">
+                <div class="swiper-wrapper"></div>
+                <div class="m4d-pm-thumbs-pagination"></div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
     }
-    ?>
+}
 
-    <script>
-        window.M4DProductMedia = <?php echo wp_json_encode([
-            'productImages' => $product_images,
-            'variations'    => $variations_data,
-        ]); ?>;
-    </script>
-
-    <?php
-});
+new M4D_Product_Media();
