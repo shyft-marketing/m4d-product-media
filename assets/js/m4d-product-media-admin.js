@@ -1,9 +1,30 @@
 jQuery(function ($) {
 
     function getIds($ul) {
-        return $ul.find('li[data-attachment-id]').map(function () {
-            return $(this).data('attachment-id');
+        return $ul.find('li[data-attachment_id]').map(function () {
+            return $(this).data('attachment_id');
         }).get();
+    }
+
+    function buildGalleryItems(attachments) {
+        return attachments.map(function (attachment) {
+            const data = attachment.toJSON();
+            const id = data.id;
+            const thumb = data.sizes && data.sizes.thumbnail
+                ? data.sizes.thumbnail.url
+                : data.url;
+
+            return `
+                <li class="image" data-attachment_id="${id}">
+                    <img src="${thumb}" />
+                    <ul class="actions">
+                        <li>
+                            <a href="#" class="delete m4d-remove-image" title="Remove image">×</a>
+                        </li>
+                    </ul>
+                </li>
+            `;
+        }).join('');
     }
 
     function syncInputsAndMarkDirty($ul) {
@@ -28,19 +49,32 @@ jQuery(function ($) {
         $('.save-variation-changes').prop('disabled', false);
     }
 
-    // Make the list sortable (drag reorder)
-    $(document).on('mouseenter', '.m4d-variation-gallery', function () {
-        const $ul = $(this);
+    function ensureSortable($ul) {
         if ($ul.data('m4dSortableInit')) return;
 
         $ul.data('m4dSortableInit', true);
 
         $ul.sortable({
-            items: 'li',
-            stop: function () {
+            items: 'li.image',
+            cursor: 'move',
+            scrollSensitivity: 40,
+            forcePlaceholderSize: true,
+            forceHelperSize: false,
+            helper: 'clone',
+            opacity: 0.65,
+            placeholder: 'wc-metabox-sortable-placeholder',
+            start: function (event, ui) {
+                ui.item.css('background-color', '#f6f6f6');
+            },
+            stop: function (event, ui) {
+                ui.item.removeAttr('style');
                 syncInputsAndMarkDirty($ul);
             }
         });
+    }
+
+    $(document).on('mouseenter', '.m4d-variation-gallery', function () {
+        ensureSortable($(this));
     });
 
     // Add images
@@ -50,44 +84,48 @@ jQuery(function ($) {
         const $btn = $(this);
         const $wrapper = $btn.closest('.m4d-variation-gallery-wrapper');
         const $ul = $wrapper.find('.m4d-variation-gallery');
+        let frame = $wrapper.data('m4dGalleryFrame');
 
-        const frame = wp.media({
-            title: 'Select gallery images',
-            button: { text: 'Add images' },
-            multiple: true
-        });
-
-        frame.on('select', function () {
-            const selection = frame.state().get('selection').toArray();
-
-            selection.forEach(att => {
-                const id = att.id;
-
-                // Avoid duplicates
-                if ($ul.find(`li[data-attachment-id="${id}"]`).length) return;
-
-                const thumb = (att.attributes.sizes && att.attributes.sizes.thumbnail)
-                    ? att.attributes.sizes.thumbnail.url
-                    : att.attributes.url;
-
-                $ul.append(`
-                    <li data-attachment-id="${id}" style="position:relative; list-style:none;">
-                        <img src="${thumb}" style="width:60px; height:60px; object-fit:cover; display:block;" />
-                        <button type="button" class="button-link m4d-remove-image"
-                            style="position:absolute; top:-8px; right:-8px; width:22px; height:22px; border-radius:999px; background:#fff; border:1px solid #ccc; line-height:20px; text-align:center; padding:0;"
-                        >×</button>
-                    </li>
-                `);
+        if (!frame) {
+            frame = wp.media({
+                frame: 'post',
+                state: 'gallery',
+                title: 'Add images to variation gallery',
+                button: { text: 'Add to gallery' },
+                library: { type: 'image' },
+                multiple: true
             });
 
-            syncInputsAndMarkDirty($ul);
+            const galleryState = frame.state('gallery');
+
+            galleryState.on('update', function (selection) {
+                const models = selection ? selection.models : galleryState.get('selection').models;
+                const html = buildGalleryItems(models);
+
+                $ul.empty().append(html);
+                ensureSortable($ul);
+                syncInputsAndMarkDirty($ul);
+            });
+
+            $wrapper.data('m4dGalleryFrame', frame);
+        }
+
+        frame.off('open').on('open', function () {
+            const selection = frame.state('gallery').get('selection');
+            selection.reset();
+
+            getIds($ul).forEach(function (id) {
+                const attachment = wp.media.attachment(id);
+                attachment.fetch();
+                selection.add(attachment);
+            });
         });
 
         frame.open();
     });
 
     // Remove image
-    $(document).on('click', '.m4d-remove-image', function (e) {
+    $(document).on('click', '.m4d-variation-gallery-wrapper .m4d-remove-image', function (e) {
         e.preventDefault();
 
         const $li = $(this).closest('li');
