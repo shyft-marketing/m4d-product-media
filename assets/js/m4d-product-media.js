@@ -11,6 +11,8 @@ jQuery(function ($) {
     const originalMainSlides = $mainWrapper.children().clone(true);
     const originalThumbSlides = $thumbWrapper.children().clone(true);
 
+    const $thumbSwiperEl = $('.m4d-thumb-swiper');
+
     const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
         slidesPerView: 'auto',
         spaceBetween: 10,
@@ -19,6 +21,20 @@ jQuery(function ($) {
         pagination: {
             el: '.swiper-pagination',
             clickable: true
+        },
+        on: {
+            touchStart: () => {
+                $thumbSwiperEl.addClass('is-grabbing');
+            },
+            touchEnd: () => {
+                $thumbSwiperEl.removeClass('is-grabbing');
+            },
+            sliderFirstMove: () => {
+                $thumbSwiperEl.addClass('is-grabbing');
+            },
+            transitionEnd: () => {
+                $thumbSwiperEl.removeClass('is-grabbing');
+            }
         }
     });
 
