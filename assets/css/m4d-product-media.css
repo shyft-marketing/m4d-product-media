@@ -25,8 +25,8 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
-  width: 2rem;
-  height: 2rem;
+  width: 1.5rem;
+  height: 1.5rem;
   cursor: pointer;
 }
 
@@ -36,8 +36,8 @@
 .m4d-pm-nav::before {
   content: "";
   display: block;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   margin: 1rem auto;
@@ -77,7 +77,7 @@
 
 .swiper-pagination-bullet {
   background-color: #ea3829;
-  opacity: 0.5;
+  opacity: 0.25;
   transition: all 0.3s ease;
 }
 
