@@ -2,7 +2,7 @@
 /**
  * Plugin Name: M4D Product Media
  * Description: Custom product image + variation media handler.
- * Version: 0.2.5
+ * Version: 0.2.6
  * Author: SHYFT
  * Author URI: https://shyft.wtf/
  * Plugin URI: https://github.com/shyft-marketing/m4d-product-media
@@ -17,16 +17,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 class M4D_Product_Media {
 
     public function __construct() {
-        // Admin
+
+        /* Admin */
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
         add_action( 'woocommerce_product_after_variable_attributes', [ $this, 'render_variation_gallery_field' ], 10, 3 );
-        add_action( 'woocommerce_save_product_variation', [ $this, 'save_variation_gallery' ], 10, 2 );
+        add_action( 'woocommerce_admin_process_variation_object', [ $this, 'save_variation_gallery_safe' ], 10, 2 );
 
-        // Frontend
+        /* Frontend */
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_assets' ] );
-        add_filter( 'woocommerce_available_variation', [ $this, 'inject_variation_gallery_data' ] );
 
-        // Shortcode
+        /* AJAX */
+        add_action( 'wp_ajax_m4d_get_variation_gallery', [ $this, 'ajax_get_variation_gallery' ] );
+        add_action( 'wp_ajax_nopriv_m4d_get_variation_gallery', [ $this, 'ajax_get_variation_gallery' ] );
+
+        /* Shortcode */
         add_shortcode( 'm4d_product_media', [ $this, 'render_product_media_shortcode' ] );
     }
 
@@ -35,7 +39,7 @@ class M4D_Product_Media {
      * ------------------------- */
 
     public function enqueue_admin_assets( $hook ) {
-        if ( $hook !== 'post.php' && $hook !== 'post-new.php' ) {
+        if ( ! in_array( $hook, [ 'post.php', 'post-new.php' ], true ) ) {
             return;
         }
 
@@ -50,7 +54,7 @@ class M4D_Product_Media {
             'm4d-product-media-admin',
             plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media-admin.js',
             [ 'jquery' ],
-            '0.1.0',
+            '0.2.6',
             true
         );
     }
@@ -65,6 +69,7 @@ class M4D_Product_Media {
             <ul class="m4d-variation-gallery" data-variation-id="<?php echo esc_attr( $variation->ID ); ?>">
                 <?php foreach ( $image_ids as $image_id ) :
                     $thumb = wp_get_attachment_image_url( $image_id, 'thumbnail' );
+                    if ( ! $thumb ) continue;
                     ?>
                     <li data-attachment-id="<?php echo esc_attr( $image_id ); ?>">
                         <img src="<?php echo esc_url( $thumb ); ?>" />
@@ -87,24 +92,22 @@ class M4D_Product_Media {
         <?php
     }
 
-    public function save_variation_gallery( $variation_id, $i ) {
-    if ( ! isset( $_POST['m4d_variation_gallery'][ $variation_id ] ) ) {
-        return;
+    public function save_variation_gallery_safe( $variation, $index ) {
+        $variation_id = $variation->get_id();
+
+        if ( empty( $_POST['m4d_variation_gallery'][ $variation_id ] ) ) {
+            delete_post_meta( $variation_id, '_m4d_variation_gallery' );
+            return;
+        }
+
+        $raw = sanitize_text_field( wp_unslash( $_POST['m4d_variation_gallery'][ $variation_id ] ) );
+
+        $ids = array_filter(
+            array_map( 'absint', explode( ',', $raw ) )
+        );
+
+        update_post_meta( $variation_id, '_m4d_variation_gallery', $ids );
     }
-
-    $raw = trim( wp_unslash( $_POST['m4d_variation_gallery'][ $variation_id ] ) );
-
-    if ( $raw === '' ) {
-        delete_post_meta( $variation_id, '_m4d_variation_gallery' );
-        return;
-    }
-
-    $ids = array_filter(
-        array_map( 'absint', explode( ',', $raw ) )
-    );
-
-    update_post_meta( $variation_id, '_m4d_variation_gallery', $ids );
-}
 
     /* -------------------------
      * FRONTEND
@@ -119,14 +122,14 @@ class M4D_Product_Media {
             'swiper',
             'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css',
             [],
-            '11.0'
+            '11'
         );
 
         wp_enqueue_script(
             'swiper',
             'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js',
             [],
-            '11.0',
+            '11',
             true
         );
 
@@ -134,75 +137,51 @@ class M4D_Product_Media {
             'm4d-product-media',
             plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media.css',
             [],
-            '0.1.0'
+            '0.2.6'
         );
 
         wp_enqueue_script(
             'm4d-product-media',
             plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media.js',
             [ 'jquery', 'swiper' ],
-            '0.1.0',
+            '0.2.6',
             true
         );
 
-        // Provide default (no-variation-selected) media so JS can cleanly reset without reloading.
-        $defaults = $this->get_default_product_media_payload();
-        wp_localize_script( 'm4d-product-media', 'M4D_PRODUCT_MEDIA', $defaults );
+        wp_localize_script(
+            'm4d-product-media',
+            'M4D_MEDIA',
+            [
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'm4d_media_nonce' ),
+            ]
+        );
     }
 
-    private function get_default_product_media_payload() {
-        global $product;
+    /* -------------------------
+     * AJAX
+     * ------------------------- */
 
-        $payload = [
-            'product_id'     => 0,
-            'featured_full'  => '',
-            'featured_id'    => 0,
-            'gallery'        => [], // full + thumb
-        ];
+    public function ajax_get_variation_gallery() {
+        check_ajax_referer( 'm4d_media_nonce', 'nonce' );
 
-        if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
-            return $payload;
+        $variation_id = absint( $_POST['variation_id'] ?? 0 );
+        if ( ! $variation_id ) {
+            wp_send_json_error();
         }
 
-        $payload['product_id']  = (int) $product->get_id();
-        $payload['featured_id'] = (int) $product->get_image_id();
+        $ids = get_post_meta( $variation_id, '_m4d_variation_gallery', true );
+        $ids = is_array( $ids ) ? $ids : [];
 
-        if ( $payload['featured_id'] ) {
-            $payload['featured_full'] = (string) wp_get_attachment_image_url( $payload['featured_id'], 'full' );
-        }
-
-        $gallery_ids = $product->get_gallery_image_ids();
-
-        foreach ( $gallery_ids as $id ) {
-            $id = (int) $id;
-            $payload['gallery'][] = [
-                'id'    => $id,
-                'full'  => (string) wp_get_attachment_image_url( $id, 'full' ),
-                'thumb' => (string) wp_get_attachment_image_url( $id, 'thumbnail' ),
+        $images = [];
+        foreach ( $ids as $id ) {
+            $images[] = [
+                'full'  => wp_get_attachment_image_url( $id, 'full' ),
+                'thumb' => wp_get_attachment_image_url( $id, 'thumbnail' ),
             ];
         }
 
-        return $payload;
-    }
-
-    public function inject_variation_gallery_data( $variation ) {
-        // Always include the key so JS logic is predictable.
-        $variation['m4d_gallery'] = [];
-
-        $gallery_ids = get_post_meta( $variation['variation_id'], '_m4d_variation_gallery', true );
-
-        if ( is_array( $gallery_ids ) && ! empty( $gallery_ids ) ) {
-            foreach ( $gallery_ids as $id ) {
-                $id = (int) $id;
-                $variation['m4d_gallery'][] = [
-                    'id'    => $id,
-                    'full'  => (string) wp_get_attachment_image_url( $id, 'full' ),
-                    'thumb' => (string) wp_get_attachment_image_url( $id, 'thumbnail' ),
-                ];
-            }
-        }
-
-        return $variation;
+        wp_send_json_success( $images );
     }
 
     /* -------------------------
@@ -215,37 +194,24 @@ class M4D_Product_Media {
         }
 
         global $product;
-        if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+        if ( ! $product ) {
             return '';
         }
 
-        // Default view:
-        // - Main swiper: featured image first, then product gallery images
-        // - Thumbs: ONLY product gallery images (not the featured image)
-        $featured_id = (int) $product->get_image_id();
+        $featured_id = $product->get_image_id();
         $gallery_ids = $product->get_gallery_image_ids();
-
-        $main_ids = [];
-        if ( $featured_id ) {
-            $main_ids[] = $featured_id;
-        }
-        foreach ( $gallery_ids as $gid ) {
-            $main_ids[] = (int) $gid;
-        }
 
         ob_start();
         ?>
-        <div class="m4d-product-media" data-product-id="<?php echo esc_attr( $product->get_id() ); ?>">
+        <div class="m4d-product-media">
+
             <div class="swiper m4d-main-swiper">
                 <div class="swiper-wrapper">
-                    <?php foreach ( $main_ids as $id ) :
-                        $src = wp_get_attachment_image_url( $id, 'full' );
-                        if ( ! $src ) { continue; }
-                        ?>
-                        <div class="swiper-slide" data-image-id="<?php echo esc_attr( $id ); ?>">
-                            <img src="<?php echo esc_url( $src ); ?>" alt="" />
+                    <?php if ( $featured_id ) : ?>
+                        <div class="swiper-slide">
+                            <img src="<?php echo esc_url( wp_get_attachment_image_url( $featured_id, 'full' ) ); ?>" />
                         </div>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
 
                 <div class="swiper-button-next"></div>
@@ -254,18 +220,15 @@ class M4D_Product_Media {
 
             <div class="swiper m4d-thumb-swiper">
                 <div class="swiper-wrapper">
-                    <?php foreach ( $gallery_ids as $id ) :
-                        $id = (int) $id;
-                        $src = wp_get_attachment_image_url( $id, 'thumbnail' );
-                        if ( ! $src ) { continue; }
-                        ?>
-                        <div class="swiper-slide" data-image-id="<?php echo esc_attr( $id ); ?>">
-                            <img src="<?php echo esc_url( $src ); ?>" alt="" />
+                    <?php foreach ( $gallery_ids as $id ) : ?>
+                        <div class="swiper-slide">
+                            <img src="<?php echo esc_url( wp_get_attachment_image_url( $id, 'thumbnail' ) ); ?>" />
                         </div>
                     <?php endforeach; ?>
                 </div>
                 <div class="swiper-pagination"></div>
             </div>
+
         </div>
         <?php
         return ob_get_clean();
