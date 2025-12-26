@@ -1,126 +1,155 @@
-(function ($) {
-  function uniqByUrl(images) {
-    const seen = new Set();
-    return images.filter((img) => {
-      const key = (img && (img.full || img.large || img.thumb)) || "";
-      if (!key) return false;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
+/* global jQuery, wp */
+jQuery(function ($) {
+
+  /* ==========================
+   * ADMIN: Variation gallery UI
+   * ========================== */
+  function isAdmin() {
+    return $('body').hasClass('wp-admin');
+  }
+
+  function refreshVariationInput($preview) {
+    const ids = [];
+    $preview.find('li').each(function () {
+      ids.push($(this).data('id'));
+    });
+
+    $preview.closest('.m4d-variation-gallery')
+      .find('.m4d-gallery-input')
+      .val(ids.join(','));
+  }
+
+  if (isAdmin()) {
+    // Add images
+    $(document).on('click', '.m4d-add-gallery', function (e) {
+      e.preventDefault();
+
+      const $galleryWrap = $(this).siblings('.m4d-gallery-preview');
+
+      const frame = wp.media({
+        title: 'Select Gallery Images',
+        multiple: true,
+        library: { type: 'image' }
+      });
+
+      frame.on('select', function () {
+        frame.state().get('selection').each(function (att) {
+          const json = att.toJSON();
+          const id = json.id;
+          const thumb = (json.sizes && json.sizes.thumbnail) ? json.sizes.thumbnail.url : json.url;
+
+          // Prevent duplicates
+          if ($galleryWrap.find(`li[data-id="${id}"]`).length) return;
+
+          $galleryWrap.append(
+            `<li data-id="${id}"><img src="${thumb}" alt=""><span class="remove">×</span></li>`
+          );
+        });
+
+        refreshVariationInput($galleryWrap);
+      });
+
+      frame.open();
+    });
+
+    // Remove images
+    $(document).on('click', '.m4d-gallery-preview .remove', function () {
+      const $wrap = $(this).closest('.m4d-gallery-preview');
+      $(this).closest('li').remove();
+      refreshVariationInput($wrap);
     });
   }
 
-  function normalizeImg(img) {
-    if (!img) return null;
-    return {
-      id: img.id || null,
-      full: img.full || img.full_src || img.src || "",
-      large: img.large || img.src || img.full_src || "",
-      thumb: img.thumb || img.gallery_thumbnail_src || img.thumb_src || img.src || "",
-      alt: img.alt || "",
-    };
+  /* ==========================
+   * FRONTEND: Swiper gallery
+   * ========================== */
+  function isProductPageGalleryPresent() {
+    return $('.m4d-product-media').length > 0 && typeof Swiper !== 'undefined';
   }
 
-  function buildSlideHtml(url, alt) {
-    const safeAlt = alt ? String(alt).replace(/"/g, "&quot;") : "";
-    return `<div class="swiper-slide"><img src="${url}" alt="${safeAlt}"></div>`;
-  }
+  if (!isAdmin() && isProductPageGalleryPresent()) {
+    let mainSwiper, thumbsSwiper;
 
-  function renderSwipers($root, images) {
-    const $main = $root.find(".m4d-pm-main");
-    const $thumbs = $root.find(".m4d-pm-thumbs");
+    function initSwipers() {
+      thumbsSwiper = new Swiper('.m4d-thumbs', {
+        slidesPerView: 'auto',
+        spaceBetween: 10,
+        watchSlidesProgress: true,
+        pagination: {
+          el: '.m4d-thumbs .swiper-pagination',
+          clickable: true
+        }
+      });
 
-    const $mainWrap = $main.find(".swiper-wrapper");
-    const $thumbWrap = $thumbs.find(".swiper-wrapper");
+      mainSwiper = new Swiper('.m4d-main', {
+        navigation: {
+          nextEl: '.m4d-main .swiper-button-next',
+          prevEl: '.m4d-main .swiper-button-prev'
+        },
+        thumbs: {
+          swiper: thumbsSwiper
+        }
+      });
+    }
 
-    $mainWrap.empty();
-    $thumbWrap.empty();
+    function destroySwipers() {
+      try { if (mainSwiper) mainSwiper.destroy(true, true); } catch (e) {}
+      try { if (thumbsSwiper) thumbsSwiper.destroy(true, true); } catch (e) {}
+      mainSwiper = null;
+      thumbsSwiper = null;
+    }
 
-    images.forEach((img) => {
-      const mainUrl = img.large || img.full;
-      const thumbUrl = img.thumb || img.large || img.full;
-      $mainWrap.append(buildSlideHtml(mainUrl, img.alt));
-      $thumbWrap.append(buildSlideHtml(thumbUrl, img.alt));
+    function renderGallery(items) {
+      const $media = $('.m4d-product-media');
+      const $mainWrap = $media.find('.m4d-main .swiper-wrapper');
+      const $thumbWrap = $media.find('.m4d-thumbs .swiper-wrapper');
+
+      $mainWrap.empty();
+      $thumbWrap.empty();
+
+      (items || []).forEach(item => {
+        $mainWrap.append(
+          `<div class="swiper-slide" data-id="${item.id}">
+            <img src="${item.large}" alt="">
+          </div>`
+        );
+
+        $thumbWrap.append(
+          `<div class="swiper-slide" data-id="${item.id}">
+            <img src="${item.thumb || item.large}" alt="">
+          </div>`
+        );
+      });
+    }
+
+    function getBaseGallery() {
+      const raw = $('.m4d-product-media').attr('data-base-gallery');
+      if (!raw) return [];
+      try { return JSON.parse(raw); } catch (e) { return []; }
+    }
+
+    function swapTo(items) {
+      destroySwipers();
+      renderGallery(items);
+      initSwipers();
+    }
+
+    // Init with base gallery
+    initSwipers();
+
+    // Woo variation found -> swap to that variation gallery if present, else fallback
+    $('form.variations_form').on('found_variation', function (e, variation) {
+      if (variation && variation.m4d_gallery && variation.m4d_gallery.length) {
+        swapTo(variation.m4d_gallery);
+      } else {
+        swapTo(getBaseGallery());
+      }
     });
 
-    const existingMain = $main.data("m4dPmMainSwiper");
-    const existingThumbs = $thumbs.data("m4dPmThumbsSwiper");
-    if (existingMain && typeof existingMain.destroy === "function") existingMain.destroy(true, true);
-    if (existingThumbs && typeof existingThumbs.destroy === "function") existingThumbs.destroy(true, true);
-
-    const thumbsSwiper = new Swiper($thumbs[0], {
-      slidesPerView: "auto",
-      spaceBetween: 10,
-      watchSlidesProgress: true,
-      pagination: {
-        el: $root.find(".m4d-pm-thumbs-pagination")[0],
-        clickable: true,
-      },
-    });
-
-    const mainSwiper = new Swiper($main[0], {
-      slidesPerView: 1,
-      spaceBetween: 10,
-      navigation: {
-        nextEl: $root.find(".m4d-pm-next")[0],
-        prevEl: $root.find(".m4d-pm-prev")[0],
-      },
-      thumbs: {
-        swiper: thumbsSwiper,
-      },
-    });
-
-    $main.data("m4dPmMainSwiper", mainSwiper);
-    $thumbs.data("m4dPmThumbsSwiper", thumbsSwiper);
-  }
-
-  function getVariationForm() {
-    const $form = $("form.variations_form");
-    return $form.length ? $form : null;
-  }
-
-  function getBaseImages() {
-    const base = (window.M4DPM && Array.isArray(window.M4DPM.baseImages)) ? window.M4DPM.baseImages : [];
-    return uniqByUrl(base.map(normalizeImg)).filter(Boolean);
-  }
-
-  function getVariationImageFromEvent(variation) {
-    if (!variation || !variation.image) return null;
-    const img = normalizeImg(variation.image);
-    if (!img || !(img.full || img.large)) return null;
-    return img;
-  }
-
-  function initOne($root) {
-    if (!window.Swiper) return;
-
-    const baseImages = getBaseImages();
-    renderSwipers($root, baseImages);
-
-    const $form = getVariationForm();
-    if (!$form) return;
-
-    $form.off(".m4dpm");
-
-    $form.on("found_variation.m4dpm", function (e, variation) {
-      const varImg = getVariationImageFromEvent(variation);
-      if (!varImg) return;
-
-      const merged = uniqByUrl([varImg].concat(baseImages));
-      renderSwipers($root, merged);
-    });
-
-    $form.on("reset_data.m4dpm", function () {
-      renderSwipers($root, baseImages);
+    // Reset variations -> revert to base product gallery
+    $('form.variations_form').on('reset_data', function () {
+      swapTo(getBaseGallery());
     });
   }
 
-  $(document).ready(function () {
-    const $roots = $(".m4d-pm[data-m4d-pm='1']");
-    if (!$roots.length) return;
-
-    $roots.each(function () {
-      initOne($(this));
-    });
-  });
-})(jQuery);
+});
