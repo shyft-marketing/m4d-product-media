@@ -10,214 +10,207 @@
  * Primary Branch: main
  */
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 class M4D_Product_Media {
 
-  const VERSION = '0.2.1';
+    public function __construct() {
+        // Admin
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
+        add_action( 'woocommerce_product_after_variable_attributes', [ $this, 'render_variation_gallery_field' ], 10, 3 );
+        add_action( 'woocommerce_save_product_variation', [ $this, 'save_variation_gallery' ], 10, 2 );
 
-  public function __construct() {
-    // Admin
-    add_action( 'woocommerce_product_after_variable_attributes', [ $this, 'add_variation_gallery_field' ], 10, 3 );
-    add_action( 'woocommerce_save_product_variation', [ $this, 'save_variation_gallery' ], 10, 2 );
-    add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
+        // Frontend
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_assets' ] );
+        add_filter( 'woocommerce_available_variation', [ $this, 'inject_variation_gallery_data' ] );
 
-    // Frontend
-    add_filter( 'woocommerce_available_variation', [ $this, 'add_gallery_to_variation_data' ], 20, 3 );
-    add_shortcode( 'm4d_product_media', [ $this, 'render_shortcode' ] );
-    add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_assets' ] );
-  }
+        // Shortcode
+        add_shortcode( 'm4d_product_media', [ $this, 'render_product_media_shortcode' ] );
+    }
 
-  private function plugin_url( $path = '' ) {
-    return plugin_dir_url( __FILE__ ) . ltrim( $path, '/' );
-  }
+    /* -------------------------
+     * ADMIN
+     * ------------------------- */
 
-  /* -------------------------
-   * ADMIN
-   * ------------------------- */
-
-  public function enqueue_admin_assets( $hook ) {
-    // Only load on product edit screens.
-    if ( ! isset( $_GET['post'] ) && ! isset( $_GET['post_type'] ) ) return;
-
-    wp_enqueue_media();
-
-    wp_enqueue_script(
-      'm4d-product-media-admin',
-      $this->plugin_url( 'assets/js/m4d-product-media.js' ),
-      [ 'jquery' ],
-      self::VERSION,
-      true
-    );
-
-    // Optional: admin-only CSS could be added later if needed.
-  }
-
-  public function add_variation_gallery_field( $loop, $variation_data, $variation ) {
-    $gallery = get_post_meta( $variation->ID, '_m4d_variation_gallery', true );
-    $ids = is_array( $gallery ) ? implode( ',', $gallery ) : '';
-    ?>
-    <div class="form-row form-row-full m4d-variation-gallery">
-      <label>Variation Image Gallery</label>
-
-      <ul class="m4d-gallery-preview">
-        <?php
-        if ( is_array( $gallery ) ) {
-          foreach ( $gallery as $image_id ) {
-            $thumb = wp_get_attachment_image( $image_id, 'thumbnail' );
-            if ( $thumb ) {
-              echo '<li data-id="' . esc_attr( $image_id ) . '">' . $thumb . '<span class="remove">×</span></li>';
-            }
-          }
+    public function enqueue_admin_assets( $hook ) {
+        if ( $hook !== 'post.php' && $hook !== 'post-new.php' ) {
+            return;
         }
+
+        $screen = get_current_screen();
+        if ( ! $screen || $screen->post_type !== 'product' ) {
+            return;
+        }
+
+        wp_enqueue_media();
+
+        wp_enqueue_script(
+            'm4d-product-media-admin',
+            plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media-admin.js',
+            [ 'jquery' ],
+            '0.1.0',
+            true
+        );
+    }
+
+    public function render_variation_gallery_field( $loop, $variation_data, $variation ) {
+        $image_ids = get_post_meta( $variation->ID, '_m4d_variation_gallery', true );
+        $image_ids = is_array( $image_ids ) ? $image_ids : [];
         ?>
-      </ul>
+        <div class="form-row form-row-full m4d-variation-gallery-wrapper">
+            <label><strong>Variation Image Gallery</strong></label>
 
-      <input type="hidden"
-        name="m4d_variation_gallery[<?php echo esc_attr( $variation->ID ); ?>]"
-        class="m4d-gallery-input"
-        value="<?php echo esc_attr( $ids ); ?>"
-      >
+            <ul class="m4d-variation-gallery" data-variation-id="<?php echo esc_attr( $variation->ID ); ?>">
+                <?php foreach ( $image_ids as $image_id ) :
+                    $thumb = wp_get_attachment_image_url( $image_id, 'thumbnail' );
+                    ?>
+                    <li data-attachment-id="<?php echo esc_attr( $image_id ); ?>">
+                        <img src="<?php echo esc_url( $thumb ); ?>" />
+                        <button type="button" class="m4d-remove-image">×</button>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
 
-      <button type="button" class="button m4d-add-gallery">Add Gallery Images</button>
+            <input
+                type="hidden"
+                class="m4d-variation-gallery-input"
+                name="m4d_variation_gallery[<?php echo esc_attr( $variation->ID ); ?>]"
+                value="<?php echo esc_attr( implode( ',', $image_ids ) ); ?>"
+            />
 
-      <p class="description" style="margin:8px 0 0;">
-        These images will be used on the frontend gallery when this variation is selected.
-      </p>
-    </div>
-    <?php
-  }
-
-  public function save_variation_gallery( $variation_id, $i ) {
-    if ( isset( $_POST['m4d_variation_gallery'][ $variation_id ] ) ) {
-      $raw = (string) $_POST['m4d_variation_gallery'][ $variation_id ];
-      $ids = array_filter( array_map( 'intval', explode( ',', $raw ) ) );
-      update_post_meta( $variation_id, '_m4d_variation_gallery', $ids );
-    }
-  }
-
-  /* -------------------------
-   * FRONTEND
-   * ------------------------- */
-
-  public function enqueue_frontend_assets() {
-    if ( ! is_product() ) return;
-
-    // Swiper
-    wp_enqueue_style(
-      'swiper',
-      'https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css',
-      [],
-      null
-    );
-
-    wp_enqueue_script(
-      'swiper',
-      'https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js',
-      [],
-      null,
-      true
-    );
-
-    // Plugin CSS
-    wp_enqueue_style(
-      'm4d-product-media',
-      $this->plugin_url( 'assets/css/m4d-product-media.css' ),
-      [],
-      self::VERSION
-    );
-
-    // Plugin JS
-    wp_enqueue_script(
-      'm4d-product-media',
-      $this->plugin_url( 'assets/js/m4d-product-media.js' ),
-      [ 'jquery', 'swiper', 'wc-add-to-cart-variation' ],
-      self::VERSION,
-      true
-    );
-  }
-
-  public function add_gallery_to_variation_data( $data, $product = null, $variation = null ) {
-    $variation_id = isset( $data['variation_id'] ) ? (int) $data['variation_id'] : 0;
-    $ids = get_post_meta( $variation_id, '_m4d_variation_gallery', true );
-    $ids = is_array( $ids ) ? array_values( array_filter( array_map( 'intval', $ids ) ) ) : [];
-
-    // Build URL payloads (no filename guessing, no wp.media on frontend)
-    $items = [];
-    foreach ( $ids as $id ) {
-      $large = wp_get_attachment_image_url( $id, 'large' );
-      $thumb = wp_get_attachment_image_url( $id, 'thumbnail' );
-      if ( $large ) {
-        $items[] = [
-          'id'    => $id,
-          'large' => $large,
-          'thumb' => $thumb ? $thumb : $large,
-        ];
-      }
-    }
-
-    $data['m4d_gallery'] = $items;
-    return $data;
-  }
-
-  public function render_shortcode() {
-    global $product;
-    if ( ! $product || ! is_a( $product, 'WC_Product' ) ) return '';
-
-    // Base product gallery (fallback/default)
-    $ids = array_filter( array_merge(
-      [ $product->get_image_id() ],
-      $product->get_gallery_image_ids()
-    ) );
-
-    $base_items = [];
-    foreach ( $ids as $id ) {
-      $large = wp_get_attachment_image_url( $id, 'large' );
-      $thumb = wp_get_attachment_image_url( $id, 'thumbnail' );
-      if ( $large ) {
-        $base_items[] = [
-          'id'    => $id,
-          'large' => $large,
-          'thumb' => $thumb ? $thumb : $large,
-        ];
-      }
-    }
-
-    // Output base gallery JSON for frontend reset/fallback
-    $json = wp_json_encode( $base_items );
-
-    ob_start(); ?>
-      <div class="m4d-product-media" data-base-gallery='<?php echo esc_attr( $json ); ?>'>
-
-        <div class="swiper m4d-main">
-          <div class="swiper-wrapper">
-            <?php foreach ( $base_items as $item ) : ?>
-              <div class="swiper-slide" data-id="<?php echo esc_attr( $item['id'] ); ?>">
-                <img src="<?php echo esc_url( $item['large'] ); ?>" alt="">
-              </div>
-            <?php endforeach; ?>
-          </div>
-
-          <div class="swiper-button-prev"></div>
-          <div class="swiper-button-next"></div>
+            <button type="button" class="button m4d-add-variation-images">
+                Add Gallery Images
+            </button>
         </div>
+        <?php
+    }
 
-        <div class="swiper m4d-thumbs">
-          <div class="swiper-wrapper">
-            <?php foreach ( $base_items as $item ) : ?>
-              <div class="swiper-slide" data-id="<?php echo esc_attr( $item['id'] ); ?>">
-                <img src="<?php echo esc_url( $item['thumb'] ); ?>" alt="">
-              </div>
-            <?php endforeach; ?>
-          </div>
+    public function save_variation_gallery( $variation_id, $i ) {
+        if ( ! isset( $_POST['m4d_variation_gallery'][ $variation_id ] ) ) {
+            delete_post_meta( $variation_id, '_m4d_variation_gallery' );
+            return;
+        }
 
-          <div class="swiper-pagination"></div>
+        $ids = array_filter(
+            array_map(
+                'absint',
+                explode( ',', $_POST['m4d_variation_gallery'][ $variation_id ] )
+            )
+        );
+
+        update_post_meta( $variation_id, '_m4d_variation_gallery', $ids );
+    }
+
+    /* -------------------------
+     * FRONTEND
+     * ------------------------- */
+
+    public function enqueue_frontend_assets() {
+        if ( ! is_product() ) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'swiper',
+            'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css',
+            [],
+            '11.0'
+        );
+
+        wp_enqueue_script(
+            'swiper',
+            'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js',
+            [],
+            '11.0',
+            true
+        );
+
+        wp_enqueue_style(
+            'm4d-product-media',
+            plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media.css',
+            [],
+            '0.1.0'
+        );
+
+        wp_enqueue_script(
+            'm4d-product-media',
+            plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media.js',
+            [ 'jquery', 'swiper' ],
+            '0.1.0',
+            true
+        );
+    }
+
+    public function inject_variation_gallery_data( $variation ) {
+        $gallery_ids = get_post_meta( $variation['variation_id'], '_m4d_variation_gallery', true );
+
+        if ( is_array( $gallery_ids ) && ! empty( $gallery_ids ) ) {
+            $images = [];
+
+            foreach ( $gallery_ids as $id ) {
+                $images[] = [
+                    'id'  => $id,
+                    'src' => wp_get_attachment_image_url( $id, 'full' ),
+                ];
+            }
+
+            $variation['m4d_gallery'] = $images;
+        }
+
+        return $variation;
+    }
+
+    /* -------------------------
+     * SHORTCODE
+     * ------------------------- */
+
+    public function render_product_media_shortcode() {
+        if ( ! is_product() ) {
+            return '';
+        }
+
+        global $product;
+
+        if ( ! $product ) {
+            return '';
+        }
+
+        $image_ids = $product->get_gallery_image_ids();
+        array_unshift( $image_ids, $product->get_image_id() );
+        ?>
+        <div class="m4d-product-media">
+            <div class="swiper m4d-main-swiper">
+                <div class="swiper-wrapper">
+                    <?php foreach ( $image_ids as $id ) :
+                        $src = wp_get_attachment_image_url( $id, 'full' );
+                        ?>
+                        <div class="swiper-slide" data-image-id="<?php echo esc_attr( $id ); ?>">
+                            <img src="<?php echo esc_url( $src ); ?>" />
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+            </div>
+
+            <div class="swiper m4d-thumb-swiper">
+                <div class="swiper-wrapper">
+                    <?php foreach ( $image_ids as $id ) :
+                        $src = wp_get_attachment_image_url( $id, 'thumbnail' );
+                        ?>
+                        <div class="swiper-slide" data-image-id="<?php echo esc_attr( $id ); ?>">
+                            <img src="<?php echo esc_url( $src ); ?>" />
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="swiper-pagination"></div>
+            </div>
         </div>
-
-      </div>
-    <?php
-    return ob_get_clean();
-  }
+        <?php
+    }
 }
 
 new M4D_Product_Media();
