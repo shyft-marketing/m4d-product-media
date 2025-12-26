@@ -70,6 +70,12 @@ jQuery(function ($) {
 
         isUpdating = true;
 
+        const transitionSpeed = 300;
+
+        mainSwiper.slideTo(startIndex, transitionSpeed);
+        thumbSwiper.slideTo(startIndex, transitionSpeed);
+
+        window.setTimeout(() => {
         const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
         const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
         const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
@@ -87,6 +93,7 @@ jQuery(function ($) {
         thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
+        }, transitionSpeed);
     }
 
     $thumbSwiperEl.on('click', '.swiper-slide', function () {
