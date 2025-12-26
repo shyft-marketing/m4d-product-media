@@ -75,9 +75,10 @@ jQuery(function ($) {
         isUpdating = false;
     }
 
-    thumbSwiper.on('click', () => {
-        if (typeof thumbSwiper.clickedIndex !== 'number') return;
-        rotateGalleryToIndex(thumbSwiper.clickedIndex);
+    $thumbSwiperEl.on('click', '.swiper-slide', function () {
+        const clickedIndex = $(this).index();
+        if (typeof clickedIndex !== 'number') return;
+        rotateGalleryToIndex(clickedIndex);
     });
 
     function resetToProductImages() {
