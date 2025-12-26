@@ -145,8 +145,9 @@ jQuery(function ($) {
     // Remove image
     $(document).on('click', '.m4d-variation-gallery-wrapper .m4d-remove-image', function (e) {
         e.preventDefault();
+        e.stopPropagation();
 
-        const $li = $(this).closest('li');
+        const $li = $(this).closest('li.image');
         const $ul = $li.closest('.m4d-variation-gallery');
 
         $li.remove();
