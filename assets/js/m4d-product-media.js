@@ -14,6 +14,8 @@ jQuery(function ($) {
     const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
         slidesPerView: 'auto',
         spaceBetween: 10,
+        watchSlidesProgress: true,
+        slideToClickedSlide: true,
         pagination: {
             el: '.swiper-pagination',
             clickable: true
