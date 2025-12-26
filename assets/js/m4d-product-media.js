@@ -87,12 +87,22 @@ jQuery(function ($) {
 
     let isUpdating = false;
 
+    function rotateGalleryToIndex(startIndex, options = {}) {
     function rotateGalleryToIndex(startIndex) {
         if (isUpdating || startIndex <= 0) return;
         if (startIndex >= mainSwiper.slides.length) return;
 
         isUpdating = true;
 
+        const { animate = true } = options;
+        const transitionSpeed = animate ? (mainSwiper.params.speed || 300) : 0;
+
+        if (animate) {
+            mainSwiper.slideTo(startIndex, transitionSpeed);
+            thumbSwiper.slideTo(startIndex, transitionSpeed);
+        }
+
+        const reorderSlides = () => {
         const transitionSpeed = 300;
 
         mainSwiper.slideTo(startIndex, transitionSpeed);
@@ -116,12 +126,24 @@ jQuery(function ($) {
         thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
+        };
+
+        if (transitionSpeed > 0) {
+            window.setTimeout(reorderSlides, transitionSpeed);
+        } else {
+            reorderSlides();
+        }
         }, transitionSpeed);
     }
 
     $thumbSwiperEl.on('click', '.swiper-slide', function () {
         const clickedIndex = $(this).index();
         if (typeof clickedIndex !== 'number') return;
+        rotateGalleryToIndex(clickedIndex, { animate: true });
+    });
+
+    mainSwiper.on('slideChangeTransitionEnd', () => {
+        rotateGalleryToIndex(mainSwiper.activeIndex, { animate: false });
         rotateGalleryToIndex(clickedIndex);
     });
 
