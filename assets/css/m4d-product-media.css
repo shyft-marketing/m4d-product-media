@@ -1,92 +1,48 @@
-.m4d-pm {
+/* Base layout */
+.m4d-product-media {
   width: 100%;
 }
 
-.m4d-pm-main {
-  position: relative;
+/* MAIN */
+.m4d-main-swiper {
   width: 100%;
-  overflow: hidden;
 }
 
-.m4d-pm-main .swiper-slide {
+.m4d-main-swiper .swiper-slide {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
-.m4d-pm-main img {
+.m4d-main-swiper img {
   display: block;
-  width: 100%;
+  max-width: 100%;
   height: auto;
 }
 
-.m4d-pm-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-  width: 1.5rem;
-  height: 1.5rem;
-  cursor: pointer;
-}
-
-.m4d-pm-prev { left: 1rem; }
-.m4d-pm-next { right: 1rem; }
-
-.m4d-pm-nav::before {
-  content: "";
-  display: block;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  margin: 1rem auto;
-  color: #808080;
-}
-
-.m4d-pm-prev::before { transform: rotate(135deg); }
-.m4d-pm-next::before { transform: rotate(-45deg); }
-
-.m4d-pm-thumbs {
-  margin-top: 1rem;
+/* THUMBS */
+.m4d-thumb-swiper {
   width: 100%;
-  overflow: hidden;
+  margin-top: 12px;
 }
 
-.m4d-pm-thumbs .swiper-slide {
-  width: auto;
-  opacity: 0.7;
-  cursor: pointer;
+/* This is the critical part: prevent slides from being 100% width */
+.m4d-thumb-swiper .swiper-slide {
+  width: auto !important;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
 }
 
-.m4d-pm-thumbs .swiper-slide-thumb-active {
-  opacity: 1;
-}
-
-.m4d-pm-thumbs img {
+.m4d-thumb-swiper img {
   display: block;
-  width: 3rem;
-  height: 3rem;
-  object-fit: contain;
+  height: 70px;
+  width: auto;
+  max-width: none;
 }
 
-.m4d-pm-thumbs-pagination {
-  margin-top: 1rem;
-  text-align: center;
-}
-
-.swiper-pagination-bullet {
-  background-color: #ea3829;
-  opacity: 0.25;
-  transition: all 0.3s ease;
-}
-
-.swiper-pagination-bullet-active {
-  background-color: #ea3829;
-  opacity: 1;
-}
-
-.swiper-pagination-bullet:hover {
-  background-color: #bb2d21;
-  opacity: 1;
+/* Pagination */
+.m4d-thumb-swiper .swiper-pagination {
+  position: relative;
+  margin-top: 10px;
 }
