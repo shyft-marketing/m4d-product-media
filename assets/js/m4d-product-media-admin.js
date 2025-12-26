@@ -36,7 +36,7 @@ jQuery(function ($) {
         $ul.data('m4dSortableInit', true);
 
         $ul.sortable({
-            items: 'li',
+            items: 'li.image',
             stop: function () {
                 syncInputsAndMarkDirty($ul);
             }
@@ -71,11 +71,13 @@ jQuery(function ($) {
                     : att.attributes.url;
 
                 $ul.append(`
-                    <li data-attachment-id="${id}" style="position:relative; list-style:none;">
-                        <img src="${thumb}" style="width:60px; height:60px; object-fit:cover; display:block;" />
-                        <button type="button" class="button-link m4d-remove-image"
-                            style="position:absolute; top:-8px; right:-8px; width:22px; height:22px; border-radius:999px; background:#fff; border:1px solid #ccc; line-height:20px; text-align:center; padding:0;"
-                        >×</button>
+                    <li class="image" data-attachment-id="${id}">
+                        <img src="${thumb}" />
+                        <ul class="actions">
+                            <li>
+                                <a href="#" class="delete m4d-remove-image" title="Remove image">×</a>
+                            </li>
+                        </ul>
                     </li>
                 `);
             });
@@ -87,7 +89,7 @@ jQuery(function ($) {
     });
 
     // Remove image
-    $(document).on('click', '.m4d-remove-image', function (e) {
+    $(document).on('click', '.m4d-variation-gallery-wrapper .m4d-remove-image', function (e) {
         e.preventDefault();
 
         const $li = $(this).closest('li');
