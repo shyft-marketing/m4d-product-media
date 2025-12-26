@@ -8,8 +8,14 @@ jQuery(function ($) {
     if (!$mainWrapper.length || !$thumbWrapper.length) return;
 
     // Cache initial slides (PRODUCT gallery)
-    const originalMainSlides = $mainWrapper.children().clone(true);
-    const originalThumbSlides = $thumbWrapper.children().clone(true);
+    const originalMainSlides = $mainWrapper
+        .children()
+        .toArray()
+        .map((slide) => slide.outerHTML);
+    const originalThumbSlides = $thumbWrapper
+        .children()
+        .toArray()
+        .map((slide) => slide.outerHTML);
 
     const $thumbSwiperEl = $('.m4d-thumb-swiper');
 
@@ -150,7 +156,8 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0);
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
     }
@@ -179,7 +186,8 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0);
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
     }
