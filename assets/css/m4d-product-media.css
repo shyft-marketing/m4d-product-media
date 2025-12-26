@@ -56,9 +56,9 @@
   cursor: grab;
 }
 
-.m4d-thumb-swiper.swiper-grabbing,
-.m4d-thumb-swiper.swiper-grabbing .swiper-wrapper,
-.m4d-thumb-swiper.swiper-grabbing .swiper-slide {
+.m4d-thumb-swiper.is-grabbing,
+.m4d-thumb-swiper.is-grabbing .swiper-wrapper,
+.m4d-thumb-swiper.is-grabbing .swiper-slide {
   cursor: grabbing;
 }
 
