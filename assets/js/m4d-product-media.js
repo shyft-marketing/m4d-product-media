@@ -14,7 +14,7 @@ jQuery(function ($) {
     const $thumbSwiperEl = $('.m4d-thumb-swiper');
 
     const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
-        slidesPerView: 'auto',
+        slidesPerView: 6,
         spaceBetween: 16,
         watchSlidesProgress: true,
         slideToClickedSlide: true,
@@ -28,7 +28,7 @@ jQuery(function ($) {
                 spaceBetween: 16
             },
             1025: {
-                slidesPerView: 'auto',
+                slidesPerView: 6,
                 spaceBetween: 16
             }
         },
