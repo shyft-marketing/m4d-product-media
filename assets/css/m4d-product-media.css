@@ -1,4 +1,8 @@
-/* Base layout */
+:root {
+  --swiper-navigation-size: 2rem;
+  --swiper-theme-color: #808080;
+}
+
 .m4d-product-media {
   width: 100%;
 }
@@ -23,7 +27,7 @@
 /* THUMBS */
 .m4d-thumb-swiper {
   width: 100%;
-  margin-top: 12px;
+  margin-top: 1rem;
 }
 
 /* This is the critical part: prevent slides from being 100% width */
@@ -44,5 +48,34 @@
 /* Pagination */
 .m4d-thumb-swiper .swiper-pagination {
   position: relative;
-  margin-top: 10px;
+  margin-top: 1rem;
+  font-size: 0.5rem;
+}
+
+.m4d-thumb-swiper .swiper-slide {
+  margin-right: 1rem;
+}
+
+.m4d-thumb-swiper .swiper-pagination-bullet {
+  margin-right: 0.25em;
+  margin-left: 0.25em;
+  background-color: #ea3829;
+  opacity: 0.25;
+  transition: all 0.3s ease;
+}
+
+.m4d-thumb-swiper .swiper-pagination-bullet-active {
+  opacity: 1;
+}
+
+.m4d-thumb-swiper .swiper-pagination-bullet:hover {
+  background-color: #bb2d21;
+}
+
+.m4d-thumb-swiper .swiper-button-next, .m4d-thumb-swiper .swiper-button-prev {
+  transition: all 0.3s ease;
+}
+
+.m4d-thumb-swiper .swiper-button-next:hover, .m4d-thumb-swiper .swiper-button-prev:hover {
+  background-color: #bb2d21;
 }
