@@ -96,9 +96,11 @@ jQuery(function ($) {
                 multiple: true
             });
 
-            frame.on('update', function () {
-                const selection = frame.state().get('selection');
-                const html = buildGalleryItems(selection.models);
+            const galleryState = frame.state('gallery');
+
+            galleryState.on('update', function (selection) {
+                const models = selection ? selection.models : galleryState.get('selection').models;
+                const html = buildGalleryItems(models);
 
                 $ul.empty().append(html);
                 ensureSortable($ul);
@@ -109,7 +111,7 @@ jQuery(function ($) {
         }
 
         frame.off('open').on('open', function () {
-            const selection = frame.state().get('selection');
+            const selection = frame.state('gallery').get('selection');
             selection.reset();
 
             getIds($ul).forEach(function (id) {
