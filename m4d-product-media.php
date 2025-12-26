@@ -240,6 +240,7 @@ class M4D_Product_Media {
 
 		$featured_id = $product->get_image_id();
 		$gallery_ids = $product->get_gallery_image_ids();
+		$main_image_ids = array_values( array_unique( array_filter( array_merge( [ $featured_id ], $gallery_ids ) ) ) );
 
 		ob_start();
 		?>
@@ -247,11 +248,14 @@ class M4D_Product_Media {
 
 			<div class="swiper m4d-main-swiper">
 				<div class="swiper-wrapper">
-					<?php if ( $featured_id ) : ?>
+					<?php foreach ( $main_image_ids as $id ) :
+						$full = wp_get_attachment_image_url( $id, 'full' );
+						if ( ! $full ) { continue; }
+						?>
 						<div class="swiper-slide">
-							<img src="<?php echo esc_url( wp_get_attachment_image_url( $featured_id, 'full' ) ); ?>" />
+							<img src="<?php echo esc_url( $full ); ?>" />
 						</div>
-					<?php endif; ?>
+					<?php endforeach; ?>
 				</div>
 
 				<div class="swiper-button-next"></div>
@@ -260,7 +264,7 @@ class M4D_Product_Media {
 
 			<div class="swiper m4d-thumb-swiper">
 				<div class="swiper-wrapper">
-					<?php foreach ( $gallery_ids as $id ) :
+					<?php foreach ( $main_image_ids as $id ) :
 						$thumb = wp_get_attachment_image_url( $id, 'thumbnail' );
 						if ( ! $thumb ) { continue; }
 						?>
