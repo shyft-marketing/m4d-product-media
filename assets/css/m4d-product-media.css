@@ -32,8 +32,6 @@
 
 /* This is the critical part: prevent slides from being 100% width */
 .m4d-thumb-swiper .swiper-slide {
-  width: auto !important;
-  flex: 0 0 auto;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -69,10 +67,6 @@
   font-size: 0.75rem;
   top: 0;
   bottom: 0;
-}
-
-.m4d-thumb-swiper .swiper-slide {
-  margin-right: 1rem !important;
 }
 
 .m4d-thumb-swiper .swiper-pagination-bullet {
@@ -122,8 +116,4 @@
     width: 100%;
     height: auto;
   }
-  
-  .m4d-thumb-swiper .swiper-slide {
-  margin-right: 0.5rem !important;
-}
 }
