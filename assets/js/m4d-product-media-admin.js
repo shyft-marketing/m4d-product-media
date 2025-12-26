@@ -96,16 +96,34 @@ jQuery(function ($) {
                 multiple: true
             });
 
-            const galleryState = frame.state('gallery');
+            const handleGalleryUpdate = function (selection) {
+                let models = [];
 
-            galleryState.on('update', function (selection) {
-                const models = selection ? selection.models : galleryState.get('selection').models;
+                if (selection && selection.models) {
+                    models = selection.models;
+                } else {
+                    const state = frame.state('gallery-edit') || frame.state('gallery');
+                    if (state) {
+                        const fallbackSelection = state.get('selection') || state.get('library');
+                        if (fallbackSelection && fallbackSelection.models) {
+                            models = fallbackSelection.models;
+                        }
+                    }
+                }
+
                 const html = buildGalleryItems(models);
 
                 $ul.empty().append(html);
                 ensureSortable($ul);
                 syncInputsAndMarkDirty($ul);
-            });
+            };
+
+            frame.on('update', handleGalleryUpdate);
+
+            const galleryState = frame.state('gallery');
+            if (galleryState) {
+                galleryState.on('update', handleGalleryUpdate);
+            }
 
             $wrapper.data('m4dGalleryFrame', frame);
         }
