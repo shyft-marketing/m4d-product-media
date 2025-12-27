@@ -19,6 +19,12 @@ jQuery(function ($) {
 
     const $thumbSwiperEl = $('.m4d-thumb-swiper');
 
+    const transitionSpeed = 300;
+
+    const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
+        slidesPerView: 'auto',
+        spaceBetween: 10,
+        speed: transitionSpeed,
     const getThumbSpacing = () => {
         const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
         return Number.isFinite(remSize) ? remSize : 16;
@@ -65,6 +71,7 @@ jQuery(function ($) {
     });
 
     const mainSwiper = new Swiper('.m4d-main-swiper', {
+        speed: transitionSpeed,
         navigation: {
             nextEl: '.swiper-button-next',
             prevEl: '.swiper-button-prev'
@@ -108,6 +115,23 @@ jQuery(function ($) {
         }
 
         const reorderSlides = () => {
+        const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
+        const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
+        const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
+        const reorderedThumbs = thumbSlides.slice(startIndex).concat(thumbSlides.slice(0, startIndex));
+
+        mainSwiper.removeAllSlides();
+        thumbSwiper.removeAllSlides();
+
+        mainSwiper.appendSlide(reorderedMain);
+        thumbSwiper.appendSlide(reorderedThumbs);
+
+        mainSwiper.update();
+        thumbSwiper.update();
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
+
+        isUpdating = false;
             const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
             const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
             const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
