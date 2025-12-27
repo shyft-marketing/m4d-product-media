@@ -1,5 +1,8 @@
 jQuery(function ($) {
 
+    if (window.M4DProductMediaInit) return;
+    window.M4DProductMediaInit = true;
+
     if (typeof Swiper === 'undefined') return;
 
     const $mainSwiperEl = $('.m4d-main-swiper');
