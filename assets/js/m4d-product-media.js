@@ -65,16 +65,16 @@ jQuery(function ($) {
             : undefined,
         on: {
             touchStart: () => {
-                $thumbSwiperEl.addClass('is-grabbing');
+                m4dThumbSwiperEl.addClass('is-grabbing');
             },
             touchEnd: () => {
-                $thumbSwiperEl.removeClass('is-grabbing');
+                m4dThumbSwiperEl.removeClass('is-grabbing');
             },
             sliderFirstMove: () => {
-                $thumbSwiperEl.addClass('is-grabbing');
+                m4dThumbSwiperEl.addClass('is-grabbing');
             },
             transitionEnd: () => {
-                $thumbSwiperEl.removeClass('is-grabbing');
+                m4dThumbSwiperEl.removeClass('is-grabbing');
             }
         }
     });
