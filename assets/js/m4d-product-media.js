@@ -174,11 +174,29 @@ jQuery(function ($) {
         isUpdating = false;
     }
 
+    function getVariationImage(variation) {
+        if (!variation || !variation.image) {
+            return null;
+        }
+
+        const image = variation.image;
+        const full = image.full_src || image.src;
+        const thumb = image.thumb_src || image.src;
+
+        if (!full || !thumb) {
+            return null;
+        }
+
+        return { full, thumb };
+    }
+
     $('form.variations_form')
         .on('found_variation', function (e, variation) {
             if (!variation || !variation.variation_id) {
                 return;
             }
+
+            const variationImage = getVariationImage(variation);
 
             $.post(
                 M4D_MEDIA.ajax_url,
@@ -188,11 +206,22 @@ jQuery(function ($) {
                     variation_id: variation.variation_id
                 },
                 function (res) {
-                    if (res.success && res.data.length) {
-                        loadVariationImages(res.data);
-                    } else {
-                        resetToProductImages();
+                    const images = [];
+
+                    if (variationImage) {
+                        images.push(variationImage);
                     }
+
+                    if (res.success && res.data.length) {
+                        images.push(...res.data);
+                    }
+
+                    if (images.length) {
+                        loadVariationImages(images);
+                        return;
+                    }
+
+                    resetToProductImages();
                 }
             );
         })
