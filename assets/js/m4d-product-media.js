@@ -13,11 +13,34 @@ jQuery(function ($) {
 
     const $thumbSwiperEl = $('.m4d-thumb-swiper');
 
+    const getThumbSpacing = () => {
+        const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        return Number.isFinite(remSize) ? remSize : 16;
+    };
+    let thumbSpacing = getThumbSpacing();
+    const setThumbSpacingVar = () => {
+        $thumbSwiperEl[0].style.setProperty('--m4d-thumb-spacing', `${thumbSpacing}px`);
+    };
+
     const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
-        slidesPerView: 'auto',
-        spaceBetween: 10,
+        slidesPerView: 6,
+        spaceBetween: thumbSpacing,
         watchSlidesProgress: true,
         slideToClickedSlide: true,
+        breakpoints: {
+            0: {
+                slidesPerView: 3,
+                spaceBetween: thumbSpacing
+            },
+            769: {
+                slidesPerView: 4,
+                spaceBetween: thumbSpacing
+            },
+            1025: {
+                slidesPerView: 6,
+                spaceBetween: thumbSpacing
+            }
+        },
         pagination: {
             el: '.swiper-pagination',
             clickable: true
@@ -37,6 +60,7 @@ jQuery(function ($) {
             }
         }
     });
+    setThumbSpacingVar();
 
     const mainSwiper = new Swiper('.m4d-main-swiper', {
         navigation: {
@@ -47,6 +71,24 @@ jQuery(function ($) {
             swiper: thumbSwiper
         }
     });
+
+    function updateThumbSpacing() {
+        const nextSpacing = getThumbSpacing();
+        if (nextSpacing === thumbSpacing) return;
+        thumbSpacing = nextSpacing;
+        setThumbSpacingVar();
+        thumbSwiper.params.spaceBetween = thumbSpacing;
+        if (thumbSwiper.params.breakpoints) {
+            Object.values(thumbSwiper.params.breakpoints).forEach((breakpoint) => {
+                if (breakpoint) {
+                    breakpoint.spaceBetween = thumbSpacing;
+                }
+            });
+        }
+        thumbSwiper.update();
+    }
+
+    $(window).on('resize orientationchange', updateThumbSpacing);
 
     let isUpdating = false;
 

@@ -28,12 +28,11 @@
 .m4d-thumb-swiper {
   width: 100%;
   margin-top: 1rem;
+  --m4d-thumb-spacing: 1rem;
 }
 
 /* This is the critical part: prevent slides from being 100% width */
 .m4d-thumb-swiper .swiper-slide {
-  width: auto !important;
-  flex: 0 0 auto;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -71,10 +70,6 @@
   bottom: 0;
 }
 
-.m4d-thumb-swiper .swiper-slide {
-  margin-right: 1rem !important;
-}
-
 .m4d-thumb-swiper .swiper-pagination-bullet {
   margin-right: 0.125em;
   margin-left: 0.125em;
@@ -102,18 +97,20 @@
   opacity: 1;
 }
 
-@media only screen and (max-width: 1024px) {
+@media only screen and (max-width: 1024px) and (min-width: 769px) {
+  .m4d-thumb-swiper .swiper-wrapper {
+    margin-right: calc(-1 * var(--m4d-thumb-spacing));
+  }
+
   .m4d-thumb-swiper img {
-    width: 6rem;
+    width: 100%;
+    height: auto;
   }
 }
 
 @media only screen and (max-width: 768px) {
   .m4d-thumb-swiper img {
-    width: 5rem;
+    width: 100%;
+    height: auto;
   }
-  
-  .m4d-thumb-swiper .swiper-slide {
-  margin-right: 0.5rem !important;
-}
 }
