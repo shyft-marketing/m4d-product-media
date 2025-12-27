@@ -2,16 +2,26 @@ jQuery(function ($) {
 
     if (typeof Swiper === 'undefined') return;
 
-    const $mainWrapper = $('.m4d-main-swiper .swiper-wrapper');
-    const $thumbWrapper = $('.m4d-thumb-swiper .swiper-wrapper');
+    const $mainSwiperEl = $('.m4d-main-swiper');
+    const $thumbSwiperEl = $('.m4d-thumb-swiper');
+    const $mainWrapper = $mainSwiperEl.find('.swiper-wrapper');
+    const $thumbWrapper = $thumbSwiperEl.find('.swiper-wrapper');
 
     if (!$mainWrapper.length || !$thumbWrapper.length) return;
 
     // Cache initial slides (PRODUCT gallery)
-    const originalMainSlides = $mainWrapper.children().clone(true);
-    const originalThumbSlides = $thumbWrapper.children().clone(true);
+    const originalMainSlides = $mainWrapper
+        .children()
+        .toArray()
+        .map((slide) => slide.outerHTML);
+    const originalThumbSlides = $thumbWrapper
+        .children()
+        .toArray()
+        .map((slide) => slide.outerHTML);
 
-    const $thumbSwiperEl = $('.m4d-thumb-swiper');
+    const thumbPaginationEl = $thumbSwiperEl.find('.swiper-pagination').get(0);
+    const mainNextEl = $mainSwiperEl.find('.swiper-button-next').get(0);
+    const mainPrevEl = $mainSwiperEl.find('.swiper-button-prev').get(0);
 
     const getThumbSpacing = () => {
         const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
@@ -19,7 +29,7 @@ jQuery(function ($) {
     };
     let thumbSpacing = getThumbSpacing();
 
-    const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
+    const thumbSwiper = new Swiper($thumbSwiperEl.get(0), {
         slidesPerView: 6,
         spaceBetween: thumbSpacing,
         watchSlidesProgress: true,
@@ -38,10 +48,12 @@ jQuery(function ($) {
                 spaceBetween: thumbSpacing
             }
         },
-        pagination: {
-            el: '.swiper-pagination',
-            clickable: true
-        },
+        pagination: thumbPaginationEl
+            ? {
+                el: thumbPaginationEl,
+                clickable: true
+            }
+            : undefined,
         on: {
             touchStart: () => {
                 $thumbSwiperEl.addClass('is-grabbing');
@@ -58,11 +70,13 @@ jQuery(function ($) {
         }
     });
 
-    const mainSwiper = new Swiper('.m4d-main-swiper', {
-        navigation: {
-            nextEl: '.swiper-button-next',
-            prevEl: '.swiper-button-prev'
-        },
+    const mainSwiper = new Swiper($mainSwiperEl.get(0), {
+        navigation: (mainNextEl && mainPrevEl)
+            ? {
+                nextEl: mainNextEl,
+                prevEl: mainPrevEl
+            }
+            : undefined,
         thumbs: {
             swiper: thumbSwiper
         }
@@ -85,7 +99,7 @@ jQuery(function ($) {
 
     $(window).on('resize orientationchange', updateThumbSpacing);
 
-    let isUpdating = false;
+    var isUpdating = false;
 
     function rotateGalleryToIndex(startIndex, options = {}) {
         if (isUpdating || startIndex <= 0) return;
@@ -150,7 +164,8 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0);
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
     }
@@ -179,7 +194,8 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0);
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
     }
