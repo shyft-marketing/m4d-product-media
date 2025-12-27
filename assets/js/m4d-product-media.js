@@ -8,8 +8,14 @@ jQuery(function ($) {
     if (!$mainWrapper.length || !$thumbWrapper.length) return;
 
     // Cache initial slides (PRODUCT gallery)
-    const originalMainSlides = $mainWrapper.children().clone(true);
-    const originalThumbSlides = $thumbWrapper.children().clone(true);
+    const originalMainSlides = $mainWrapper
+        .children()
+        .toArray()
+        .map((slide) => slide.outerHTML);
+    const originalThumbSlides = $thumbWrapper
+        .children()
+        .toArray()
+        .map((slide) => slide.outerHTML);
 
     const $thumbSwiperEl = $('.m4d-thumb-swiper');
 
@@ -19,8 +25,31 @@ jQuery(function ($) {
         slidesPerView: 'auto',
         spaceBetween: 10,
         speed: transitionSpeed,
+    const getThumbSpacing = () => {
+        const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        return Number.isFinite(remSize) ? remSize : 16;
+    };
+    let thumbSpacing = getThumbSpacing();
+
+    const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
+        slidesPerView: 6,
+        spaceBetween: thumbSpacing,
         watchSlidesProgress: true,
         slideToClickedSlide: true,
+        breakpoints: {
+            0: {
+                slidesPerView: 3,
+                spaceBetween: thumbSpacing
+            },
+            769: {
+                slidesPerView: 4,
+                spaceBetween: thumbSpacing
+            },
+            1025: {
+                slidesPerView: 6,
+                spaceBetween: thumbSpacing
+            }
+        },
         pagination: {
             el: '.swiper-pagination',
             clickable: true
@@ -51,6 +80,23 @@ jQuery(function ($) {
             swiper: thumbSwiper
         }
     });
+
+    function updateThumbSpacing() {
+        const nextSpacing = getThumbSpacing();
+        if (nextSpacing === thumbSpacing) return;
+        thumbSpacing = nextSpacing;
+        thumbSwiper.params.spaceBetween = thumbSpacing;
+        if (thumbSwiper.params.breakpoints) {
+            Object.values(thumbSwiper.params.breakpoints).forEach((breakpoint) => {
+                if (breakpoint) {
+                    breakpoint.spaceBetween = thumbSpacing;
+                }
+            });
+        }
+        thumbSwiper.update();
+    }
+
+    $(window).on('resize orientationchange', updateThumbSpacing);
 
     let isUpdating = false;
 
@@ -86,6 +132,23 @@ jQuery(function ($) {
         thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
+            const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
+            const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
+            const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
+            const reorderedThumbs = thumbSlides.slice(startIndex).concat(thumbSlides.slice(0, startIndex));
+
+            mainSwiper.removeAllSlides();
+            thumbSwiper.removeAllSlides();
+
+            mainSwiper.appendSlide(reorderedMain);
+            thumbSwiper.appendSlide(reorderedThumbs);
+
+            mainSwiper.update();
+            thumbSwiper.update();
+            mainSwiper.slideTo(0, 0);
+            thumbSwiper.slideTo(0, 0);
+
+            isUpdating = false;
         };
 
         if (transitionSpeed > 0) {
@@ -117,7 +180,8 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0);
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
     }
@@ -146,7 +210,8 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0);
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
     }
