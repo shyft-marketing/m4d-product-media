@@ -53,7 +53,7 @@
 
 .m4d-thumb-swiper .swiper-wrapper {
   cursor: grab;
-  padding-right: 1rem;
+  padding-right: 0;
 }
 
 .m4d-thumb-swiper.is-grabbing,
