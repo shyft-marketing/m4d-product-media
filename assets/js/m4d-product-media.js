@@ -2,8 +2,10 @@ jQuery(function ($) {
 
     if (typeof Swiper === 'undefined') return;
 
-    const $mainWrapper = $('.m4d-main-swiper .swiper-wrapper');
-    const $thumbWrapper = $('.m4d-thumb-swiper .swiper-wrapper');
+    const $mainSwiperEl = $('.m4d-main-swiper');
+    const $thumbSwiperEl = $('.m4d-thumb-swiper');
+    const $mainWrapper = $mainSwiperEl.find('.swiper-wrapper');
+    const $thumbWrapper = $thumbSwiperEl.find('.swiper-wrapper');
 
     if (!$mainWrapper.length || !$thumbWrapper.length) return;
 
@@ -17,6 +19,9 @@ jQuery(function ($) {
         .toArray()
         .map((slide) => slide.outerHTML);
 
+    const thumbPaginationEl = $thumbSwiperEl.find('.swiper-pagination').get(0);
+    const mainNextEl = $mainSwiperEl.find('.swiper-button-next').get(0);
+    const mainPrevEl = $mainSwiperEl.find('.swiper-button-prev').get(0);
     const $thumbSwiperEl = $('.m4d-thumb-swiper');
 
     const transitionSpeed = 300;
@@ -30,7 +35,7 @@ jQuery(function ($) {
         $thumbSwiperEl[0].style.setProperty('--m4d-thumb-spacing', `${thumbSpacing}px`);
     };
 
-    const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
+    const thumbSwiper = new Swiper($thumbSwiperEl.get(0), {
         slidesPerView: 6,
         spaceBetween: thumbSpacing,
         watchSlidesProgress: true,
@@ -49,10 +54,12 @@ jQuery(function ($) {
                 spaceBetween: thumbSpacing
             }
         },
-        pagination: {
-            el: '.swiper-pagination',
-            clickable: true
-        },
+        pagination: thumbPaginationEl
+            ? {
+                el: thumbPaginationEl,
+                clickable: true
+            }
+            : undefined,
         on: {
             touchStart: () => {
                 $thumbSwiperEl.addClass('is-grabbing');
@@ -70,6 +77,13 @@ jQuery(function ($) {
     });
     setThumbSpacingVar();
 
+    const mainSwiper = new Swiper($mainSwiperEl.get(0), {
+        navigation: (mainNextEl && mainPrevEl)
+            ? {
+                nextEl: mainNextEl,
+                prevEl: mainPrevEl
+            }
+            : undefined,
     const mainSwiper = new Swiper('.m4d-main-swiper', {
         speed: transitionSpeed,
         navigation: {
@@ -99,7 +113,7 @@ jQuery(function ($) {
 
     $(window).on('resize orientationchange', updateThumbSpacing);
 
-    let isUpdating = false;
+    var isUpdating = false;
 
     function rotateGalleryToIndex(startIndex) {
         if (isUpdating || startIndex <= 0) return;
