@@ -2,7 +2,7 @@
 /**
  * Plugin Name: M4D Product Media
  * Description: Custom product image + variation media handler.
- * Version: 0.2.20
+ * Version: 0.2.22
  * Author: SHYFT
  * Author URI: https://shyft.wtf/
  * Plugin URI: https://github.com/shyft-marketing/m4d-product-media
@@ -52,18 +52,24 @@ class M4D_Product_Media {
 
 		wp_enqueue_media();
 
+		$admin_css_path = plugin_dir_path( __FILE__ ) . 'assets/css/m4d-product-media-admin.css';
+		$admin_js_path  = plugin_dir_path( __FILE__ ) . 'assets/js/m4d-product-media-admin.js';
+
+		$admin_css_version = file_exists( $admin_css_path ) ? (string) filemtime( $admin_css_path ) : '0.2.22';
+		$admin_js_version  = file_exists( $admin_js_path ) ? (string) filemtime( $admin_js_path ) : '0.2.22';
+
 		wp_enqueue_style(
 			'm4d-product-media-admin',
 			plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media-admin.css',
 			[],
-			'0.2.13'
+			$admin_css_version
 		);
 
 		wp_enqueue_script(
 			'm4d-product-media-admin',
 			plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media-admin.js',
 			[ 'jquery', 'jquery-ui-sortable' ],
-			'0.2.13',
+			$admin_js_version,
 			true
 		);
 	}
@@ -180,18 +186,24 @@ class M4D_Product_Media {
 			true
 		);
 
+		$frontend_css_path = plugin_dir_path( __FILE__ ) . 'assets/css/m4d-product-media.css';
+		$frontend_js_path  = plugin_dir_path( __FILE__ ) . 'assets/js/m4d-product-media.js';
+
+		$frontend_css_version = file_exists( $frontend_css_path ) ? (string) filemtime( $frontend_css_path ) : '0.2.22';
+		$frontend_js_version  = file_exists( $frontend_js_path ) ? (string) filemtime( $frontend_js_path ) : '0.2.22';
+
 		wp_enqueue_style(
 			'm4d-product-media',
 			plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media.css',
 			[],
-			'0.2.13'
+			$frontend_css_version
 		);
 
 		wp_enqueue_script(
 			'm4d-product-media',
 			plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media.js',
 			[ 'jquery', 'swiper' ],
-			'0.2.13',
+			$frontend_js_version,
 			true
 		);
 
