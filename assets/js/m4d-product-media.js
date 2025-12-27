@@ -2,24 +2,34 @@ jQuery(function ($) {
 
     if (typeof Swiper === 'undefined') return;
 
-    const $mainWrapper = $('.m4d-main-swiper .swiper-wrapper');
-    const $thumbWrapper = $('.m4d-thumb-swiper .swiper-wrapper');
+    var $mainSwiperEl = $('.m4d-main-swiper');
+    var $thumbSwiperEl = $('.m4d-thumb-swiper');
+    var $mainWrapper = $mainSwiperEl.find('.swiper-wrapper');
+    var $thumbWrapper = $thumbSwiperEl.find('.swiper-wrapper');
 
     if (!$mainWrapper.length || !$thumbWrapper.length) return;
 
     // Cache initial slides (PRODUCT gallery)
-    const originalMainSlides = $mainWrapper.children().clone(true);
-    const originalThumbSlides = $thumbWrapper.children().clone(true);
+    var originalMainSlides = $mainWrapper
+        .children()
+        .toArray()
+        .map((slide) => slide.outerHTML);
+    var originalThumbSlides = $thumbWrapper
+        .children()
+        .toArray()
+        .map((slide) => slide.outerHTML);
 
-    const $thumbSwiperEl = $('.m4d-thumb-swiper');
+    var thumbPaginationEl = $thumbSwiperEl.find('.swiper-pagination').get(0);
+    var mainNextEl = $mainSwiperEl.find('.swiper-button-next').get(0);
+    var mainPrevEl = $mainSwiperEl.find('.swiper-button-prev').get(0);
 
-    const getThumbSpacing = () => {
-        const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    var getThumbSpacing = () => {
+        var remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
         return Number.isFinite(remSize) ? remSize : 16;
     };
-    let thumbSpacing = getThumbSpacing();
+    var thumbSpacing = getThumbSpacing();
 
-    const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
+    var thumbSwiper = new Swiper($thumbSwiperEl.get(0), {
         slidesPerView: 6,
         spaceBetween: thumbSpacing,
         watchSlidesProgress: true,
@@ -38,10 +48,12 @@ jQuery(function ($) {
                 spaceBetween: thumbSpacing
             }
         },
-        pagination: {
-            el: '.swiper-pagination',
-            clickable: true
-        },
+        pagination: thumbPaginationEl
+            ? {
+                el: thumbPaginationEl,
+                clickable: true
+            }
+            : undefined,
         on: {
             touchStart: () => {
                 $thumbSwiperEl.addClass('is-grabbing');
@@ -58,18 +70,20 @@ jQuery(function ($) {
         }
     });
 
-    const mainSwiper = new Swiper('.m4d-main-swiper', {
-        navigation: {
-            nextEl: '.swiper-button-next',
-            prevEl: '.swiper-button-prev'
-        },
+    var mainSwiper = new Swiper($mainSwiperEl.get(0), {
+        navigation: (mainNextEl && mainPrevEl)
+            ? {
+                nextEl: mainNextEl,
+                prevEl: mainPrevEl
+            }
+            : undefined,
         thumbs: {
             swiper: thumbSwiper
         }
     });
 
     function updateThumbSpacing() {
-        const nextSpacing = getThumbSpacing();
+        var nextSpacing = getThumbSpacing();
         if (nextSpacing === thumbSpacing) return;
         thumbSpacing = nextSpacing;
         thumbSwiper.params.spaceBetween = thumbSpacing;
@@ -85,7 +99,7 @@ jQuery(function ($) {
 
     $(window).on('resize orientationchange', updateThumbSpacing);
 
-    let isUpdating = false;
+    var isUpdating = false;
 
     function rotateGalleryToIndex(startIndex, options = {}) {
         if (isUpdating || startIndex <= 0) return;
@@ -93,19 +107,19 @@ jQuery(function ($) {
 
         isUpdating = true;
 
-        const { animate = true } = options;
-        const transitionSpeed = animate ? (mainSwiper.params.speed || 300) : 0;
+        var { animate = true } = options;
+        var transitionSpeed = animate ? (mainSwiper.params.speed || 300) : 0;
 
         if (animate) {
             mainSwiper.slideTo(startIndex, transitionSpeed);
             thumbSwiper.slideTo(startIndex, transitionSpeed);
         }
 
-        const reorderSlides = () => {
-            const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
-            const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
-            const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
-            const reorderedThumbs = thumbSlides.slice(startIndex).concat(thumbSlides.slice(0, startIndex));
+        var reorderSlides = () => {
+            var mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
+            var thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
+            var reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
+            var reorderedThumbs = thumbSlides.slice(startIndex).concat(thumbSlides.slice(0, startIndex));
 
             mainSwiper.removeAllSlides();
             thumbSwiper.removeAllSlides();
@@ -129,7 +143,7 @@ jQuery(function ($) {
     }
 
     $thumbSwiperEl.on('click', '.swiper-slide', function () {
-        const clickedIndex = $(this).index();
+        var clickedIndex = $(this).index();
         if (typeof clickedIndex !== 'number') return;
         rotateGalleryToIndex(clickedIndex, { animate: true });
     });
@@ -150,7 +164,8 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0);
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
     }
@@ -179,7 +194,8 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0);
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
     }
