@@ -86,6 +86,7 @@
 
 .m4d-thumb-swiper .swiper-pagination-bullet:hover {
   background-color: #bb2d21;
+  opacity: 1;
 }
 
 .m4d-thumb-swiper .swiper-button-next, .m4d-thumb-swiper .swiper-button-prev {
