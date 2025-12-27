@@ -96,7 +96,7 @@ jQuery(function ($) {
     });
 
     function updateThumbSpacing() {
-        const nextSpacing = getThumbSpacing();
+        var nextSpacing = getThumbSpacing();
         if (nextSpacing === thumbSpacing) return;
         thumbSpacing = nextSpacing;
         setThumbSpacingVar();
