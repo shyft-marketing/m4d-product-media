@@ -28,6 +28,7 @@
 .m4d-thumb-swiper {
   width: 100%;
   margin-top: 1rem;
+  --m4d-thumb-spacing: 1rem;
 }
 
 /* This is the critical part: prevent slides from being 100% width */
@@ -52,6 +53,7 @@
 
 .m4d-thumb-swiper .swiper-wrapper {
   cursor: grab;
+  padding-right: 1rem;
 }
 
 .m4d-thumb-swiper.is-grabbing,
@@ -96,6 +98,9 @@
   opacity: 1;
 }
 
+@media only screen and (max-width: 1024px) and (min-width: 769px) {
+  .m4d-thumb-swiper .swiper-wrapper {
+    margin-right: calc(-1 * var(--m4d-thumb-spacing));
 @media only screen and (max-width: 1024px) {
   .m4d-thumb-swiper .swiper-slide {
     width: calc((100% - 3rem) / 4) !important;

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: M4D Product Media
  * Description: Custom product image + variation media handler.
- * Version: 0.2.22
+ * Version: 0.2.28
  * Author: SHYFT
  * Author URI: https://shyft.wtf/
  * Plugin URI: https://github.com/shyft-marketing/m4d-product-media
@@ -62,14 +62,14 @@ class M4D_Product_Media {
 			'm4d-product-media-admin',
 			plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media-admin.css',
 			[],
-			$admin_css_version
+			'0.2.22'
 		);
 
 		wp_enqueue_script(
 			'm4d-product-media-admin',
 			plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media-admin.js',
 			[ 'jquery', 'jquery-ui-sortable' ],
-			$admin_js_version,
+			'0.2.22',
 			true
 		);
 	}
@@ -196,14 +196,14 @@ class M4D_Product_Media {
 			'm4d-product-media',
 			plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media.css',
 			[],
-			$frontend_css_version
+			'0.2.22'
 		);
 
 		wp_enqueue_script(
 			'm4d-product-media',
 			plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media.js',
 			[ 'jquery', 'swiper' ],
-			$frontend_js_version,
+			'0.2.22',
 			true
 		);
 
