@@ -62,14 +62,14 @@ class M4D_Product_Media {
 			'm4d-product-media-admin',
 			plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media-admin.css',
 			[],
-			'0.2.22'
+			$admin_css_version
 		);
 
 		wp_enqueue_script(
 			'm4d-product-media-admin',
 			plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media-admin.js',
 			[ 'jquery', 'jquery-ui-sortable' ],
-			'0.2.22',
+			$admin_js_version,
 			true
 		);
 	}
@@ -196,14 +196,14 @@ class M4D_Product_Media {
 			'm4d-product-media',
 			plugin_dir_url( __FILE__ ) . 'assets/css/m4d-product-media.css',
 			[],
-			'0.2.22'
+			$frontend_css_version
 		);
 
 		wp_enqueue_script(
 			'm4d-product-media',
 			plugin_dir_url( __FILE__ ) . 'assets/js/m4d-product-media.js',
 			[ 'jquery', 'swiper' ],
-			'0.2.22',
+			$frontend_js_version,
 			true
 		);
 
