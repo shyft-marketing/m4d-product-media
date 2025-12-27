@@ -22,12 +22,18 @@ jQuery(function ($) {
     const thumbPaginationEl = $thumbSwiperEl.find('.swiper-pagination').get(0);
     const mainNextEl = $mainSwiperEl.find('.swiper-button-next').get(0);
     const mainPrevEl = $mainSwiperEl.find('.swiper-button-prev').get(0);
+    const $thumbSwiperEl = $('.m4d-thumb-swiper');
+
+    const transitionSpeed = 300;
 
     const getThumbSpacing = () => {
         const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
         return Number.isFinite(remSize) ? remSize : 16;
     };
     let thumbSpacing = getThumbSpacing();
+    const setThumbSpacingVar = () => {
+        $thumbSwiperEl[0].style.setProperty('--m4d-thumb-spacing', `${thumbSpacing}px`);
+    };
 
     const thumbSwiper = new Swiper($thumbSwiperEl.get(0), {
         slidesPerView: 6,
@@ -69,6 +75,7 @@ jQuery(function ($) {
             }
         }
     });
+    setThumbSpacingVar();
 
     const mainSwiper = new Swiper($mainSwiperEl.get(0), {
         navigation: (mainNextEl && mainPrevEl)
@@ -77,6 +84,12 @@ jQuery(function ($) {
                 prevEl: mainPrevEl
             }
             : undefined,
+    const mainSwiper = new Swiper('.m4d-main-swiper', {
+        speed: transitionSpeed,
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev'
+        },
         thumbs: {
             swiper: thumbSwiper
         }
@@ -86,6 +99,7 @@ jQuery(function ($) {
         const nextSpacing = getThumbSpacing();
         if (nextSpacing === thumbSpacing) return;
         thumbSpacing = nextSpacing;
+        setThumbSpacingVar();
         thumbSwiper.params.spaceBetween = thumbSpacing;
         if (thumbSwiper.params.breakpoints) {
             Object.values(thumbSwiper.params.breakpoints).forEach((breakpoint) => {
@@ -101,56 +115,30 @@ jQuery(function ($) {
 
     var isUpdating = false;
 
-    function rotateGalleryToIndex(startIndex, options = {}) {
+    function rotateGalleryToIndex(startIndex) {
         if (isUpdating || startIndex <= 0) return;
         if (startIndex >= mainSwiper.slides.length) return;
 
         isUpdating = true;
 
-        const { animate = true } = options;
-        const transitionSpeed = animate ? (mainSwiper.params.speed || 300) : 0;
+        const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
+        const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
+        const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
+        const reorderedThumbs = thumbSlides.slice(startIndex).concat(thumbSlides.slice(0, startIndex));
 
-        if (animate) {
-            mainSwiper.slideTo(startIndex, transitionSpeed);
-            thumbSwiper.slideTo(startIndex, transitionSpeed);
-        }
+        mainSwiper.removeAllSlides();
+        thumbSwiper.removeAllSlides();
 
-        const reorderSlides = () => {
-            const mainSlides = Array.from(mainSwiper.slides).map((slide) => slide.outerHTML);
-            const thumbSlides = Array.from(thumbSwiper.slides).map((slide) => slide.outerHTML);
-            const reorderedMain = mainSlides.slice(startIndex).concat(mainSlides.slice(0, startIndex));
-            const reorderedThumbs = thumbSlides.slice(startIndex).concat(thumbSlides.slice(0, startIndex));
+        mainSwiper.appendSlide(reorderedMain);
+        thumbSwiper.appendSlide(reorderedThumbs);
 
-            mainSwiper.removeAllSlides();
-            thumbSwiper.removeAllSlides();
-
-            mainSwiper.appendSlide(reorderedMain);
-            thumbSwiper.appendSlide(reorderedThumbs);
-
-            mainSwiper.update();
-            thumbSwiper.update();
-            mainSwiper.slideTo(0, 0);
-            thumbSwiper.slideTo(0, 0);
-
-            isUpdating = false;
-        };
-
-        if (transitionSpeed > 0) {
-            window.setTimeout(reorderSlides, transitionSpeed);
-        } else {
-            reorderSlides();
-        }
+        mainSwiper.update();
+        thumbSwiper.update();
     }
 
-    $thumbSwiperEl.on('click', '.swiper-slide', function () {
-        const clickedIndex = $(this).index();
-        if (typeof clickedIndex !== 'number') return;
-        rotateGalleryToIndex(clickedIndex, { animate: true });
-    });
+    $(window).on('resize orientationchange', updateThumbSpacing);
 
-    mainSwiper.on('slideChangeTransitionEnd', () => {
-        rotateGalleryToIndex(mainSwiper.activeIndex, { animate: false });
-    });
+    let isUpdating = false;
 
     function resetToProductImages() {
         if (isUpdating) return;
