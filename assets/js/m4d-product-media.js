@@ -8,10 +8,18 @@ jQuery(function ($) {
     if (!$mainWrapper.length || !$thumbWrapper.length) return;
 
     // Cache initial slides (PRODUCT gallery)
-    const originalMainSlides = $mainWrapper.children().clone(true);
-    const originalThumbSlides = $thumbWrapper.children().clone(true);
+    const originalMainSlides = $mainWrapper
+        .children()
+        .toArray()
+        .map((slide) => slide.outerHTML);
+    const originalThumbSlides = $thumbWrapper
+        .children()
+        .toArray()
+        .map((slide) => slide.outerHTML);
 
     const $thumbSwiperEl = $('.m4d-thumb-swiper');
+
+    const transitionSpeed = 300;
 
     const getThumbSpacing = () => {
         const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
@@ -63,6 +71,7 @@ jQuery(function ($) {
     setThumbSpacingVar();
 
     const mainSwiper = new Swiper('.m4d-main-swiper', {
+        speed: transitionSpeed,
         navigation: {
             nextEl: '.swiper-button-next',
             prevEl: '.swiper-button-prev'
@@ -111,16 +120,11 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0, 0);
-        thumbSwiper.slideTo(0, 0);
-
-        isUpdating = false;
     }
 
-    thumbSwiper.on('click', () => {
-        if (typeof thumbSwiper.clickedIndex !== 'number') return;
-        rotateGalleryToIndex(thumbSwiper.clickedIndex);
-    });
+    $(window).on('resize orientationchange', updateThumbSpacing);
+
+    let isUpdating = false;
 
     function resetToProductImages() {
         if (isUpdating) return;
@@ -134,7 +138,8 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0);
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
     }
@@ -163,7 +168,8 @@ jQuery(function ($) {
 
         mainSwiper.update();
         thumbSwiper.update();
-        mainSwiper.slideTo(0);
+        mainSwiper.slideTo(0, 0);
+        thumbSwiper.slideTo(0, 0);
 
         isUpdating = false;
     }
