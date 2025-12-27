@@ -21,6 +21,8 @@ jQuery(function ($) {
 
     const transitionSpeed = 300;
 
+    const $thumbSwiperEl = $('.m4d-thumb-swiper');
+
     const thumbSwiper = new Swiper('.m4d-thumb-swiper', {
         slidesPerView: 'auto',
         spaceBetween: 10,
