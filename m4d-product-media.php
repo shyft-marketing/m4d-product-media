@@ -2,7 +2,7 @@
 /**
  * Plugin Name: M4D Product Media
  * Description: Custom product image + variation media handler.
- * Version: 0.2.32
+ * Version: 0.2.33
  * Author: SHYFT
  * Author URI: https://shyft.wtf/
  * Plugin URI: https://github.com/shyft-marketing/m4d-product-media
