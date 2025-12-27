@@ -36,6 +36,7 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
+  cursor: pointer;
 }
 
 .m4d-thumb-swiper img {
@@ -43,6 +44,23 @@
   height: 70px;
   width: auto;
   max-width: none;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.m4d-thumb-swiper .swiper-slide-thumb-active img {
+  opacity: 1;
+}
+
+.m4d-thumb-swiper .swiper-wrapper {
+  cursor: grab;
+  padding-right: 1rem;
+}
+
+.m4d-thumb-swiper.is-grabbing,
+.m4d-thumb-swiper.is-grabbing .swiper-wrapper,
+.m4d-thumb-swiper.is-grabbing .swiper-slide {
+  cursor: grabbing;
 }
 
 /* Pagination */
@@ -64,6 +82,7 @@
   background-color: #ea3829;
   opacity: 0.25;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .m4d-thumb-swiper .swiper-pagination-bullet-active {
@@ -76,6 +95,7 @@
 
 .m4d-thumb-swiper .swiper-button-next, .m4d-thumb-swiper .swiper-button-prev {
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .m4d-thumb-swiper .swiper-button-next:hover, .m4d-thumb-swiper .swiper-button-prev:hover {
